@@ -28,12 +28,11 @@ const tileLayers = {
 let activeLayer = tileLayers.street;
 activeLayer.addTo(map);
 
-document.querySelectorAll('input[name="mapstyle"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-        map.removeLayer(activeLayer);
-        activeLayer = tileLayers[radio.value];
-        activeLayer.addTo(map);
-    });
+document.addEventListener('change', e => {
+    if (e.target.name !== 'mapstyle') return;
+    map.removeLayer(activeLayer);
+    activeLayer = tileLayers[e.target.value];
+    activeLayer.addTo(map);
 });
 
 let marker = null;
