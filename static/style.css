@@ -155,6 +155,15 @@ input[type="range"] {
     border-top: 1px solid #f0f0f0;
 }
 
+.action-row {
+    display: flex;
+    gap: 6px;
+}
+
+.action-row .btn-secondary {
+    flex: 1;
+}
+
 .result-stats {
     font-size: 16px;
     font-weight: 700;

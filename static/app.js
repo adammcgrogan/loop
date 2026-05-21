@@ -3,6 +3,7 @@ const state = {
     lng: null,
     seed: null,
     routeCoords: null,
+    geojson: null,
 };
 
 const map = L.map('map', { zoomControl: true }).setView([51.505, -0.09], 13);
@@ -106,6 +107,7 @@ function displayRoute(geojson) {
 
     const coords = feature.geometry.coordinates;
     state.routeCoords = coords;
+    state.geojson = geojson;
     const latlngs = coords.map(([lng, lat]) => [lat, lng]);
 
     casingLayer = L.polyline(latlngs, { color: '#fff', weight: 7, opacity: 1 }).addTo(map);
@@ -135,6 +137,40 @@ function displayRoute(geojson) {
     }
 }
 
+document.getElementById('share-btn').addEventListener('click', async () => {
+    if (!state.geojson || !state.lat) return;
+
+    const btn = document.getElementById('share-btn');
+    btn.textContent = 'Sharing...';
+    btn.disabled = true;
+
+    try {
+        const meta = {
+            distance: parseInt(distanceInput.value),
+            surface: document.querySelector('input[name="surface"]:checked').value,
+            hills: document.querySelector('input[name="hills"]:checked').value,
+        };
+
+        const resp = await fetch('/api/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ route: state.geojson, meta }),
+        });
+
+        if (!resp.ok) throw new Error(await resp.text());
+
+        const { id } = await resp.json();
+        const url = `${window.location.origin}/share/${id}`;
+        await navigator.clipboard.writeText(url);
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Share'; btn.disabled = false; }, 2000);
+    } catch (err) {
+        alert(`Could not share route: ${err.message}`);
+        btn.textContent = 'Share';
+        btn.disabled = false;
+    }
+});
+
 document.getElementById('export-btn').addEventListener('click', async () => {
     if (!state.routeCoords) return;
 
@@ -157,3 +193,33 @@ document.getElementById('export-btn').addEventListener('click', async () => {
         alert(`Could not export GPX: ${err.message}`);
     }
 });
+
+// Load a shared route when visiting /share/{id}
+const shareMatch = window.location.pathname.match(/^\/share\/([a-z0-9]+)$/);
+if (shareMatch) {
+    (async () => {
+        try {
+            const resp = await fetch(`/api/share/${shareMatch[1]}`);
+            if (!resp.ok) throw new Error('Share not found');
+
+            const { route, meta } = await resp.json();
+
+            if (meta.distance) {
+                distanceInput.value = meta.distance;
+                distanceDisplay.textContent = `${(meta.distance / 1000).toFixed(1)} km`;
+            }
+            if (meta.surface) {
+                const el = document.querySelector(`input[name="surface"][value="${meta.surface}"]`);
+                if (el) el.checked = true;
+            }
+            if (meta.hills) {
+                const el = document.querySelector(`input[name="hills"][value="${meta.hills}"]`);
+                if (el) el.checked = true;
+            }
+
+            displayRoute(route);
+        } catch (err) {
+            alert(`Could not load shared route: ${err.message}`);
+        }
+    })();
+}
