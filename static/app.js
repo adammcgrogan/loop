@@ -1,3 +1,5 @@
+console.log('[loop] app.js v2775107 loaded');
+
 const state = {
     lat: null,
     lng: null,

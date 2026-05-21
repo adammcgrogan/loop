@@ -36,7 +36,11 @@ func main() {
 	h := handler.New(tmpl, ors.NewClient(os.Getenv("ORS_API_KEY")), st, os.Getenv("ADMIN_USERNAME"), os.Getenv("ADMIN_PASSWORD"))
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /static/", http.FileServer(http.FS(content)))
+	staticHandler := http.FileServer(http.FS(content))
+	mux.Handle("GET /static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		staticHandler.ServeHTTP(w, r)
+	}))
 	mux.HandleFunc("GET /", h.Index)
 	mux.HandleFunc("GET /share/{id}", h.SharePage)
 	mux.HandleFunc("POST /api/route", h.Route)
