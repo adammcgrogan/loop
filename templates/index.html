@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit — Running Route Builder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h1>Circuit</h1>
+            <p class="tagline">Build a running loop from anywhere.</p>
+        </div>
+
+        <section>
+            <span class="label">Start location</span>
+            <button id="locate-btn" class="btn-secondary full">Use my location</button>
+            <p id="location-text" class="hint">Or click anywhere on the map.</p>
+        </section>
+
+        <section>
+            <label class="label" for="distance">Distance — <span id="distance-display">5.0 km</span></label>
+            <input type="range" id="distance" min="1000" max="30000" step="500" value="5000">
+        </section>
+
+        <section>
+            <span class="label">Surface</span>
+            <div class="toggle-group">
+                <label class="toggle-option">
+                    <input type="radio" name="surface" value="road" checked>
+                    <span>Roads</span>
+                </label>
+                <label class="toggle-option">
+                    <input type="radio" name="surface" value="trail">
+                    <span>Trails</span>
+                </label>
+            </div>
+        </section>
+
+        <section>
+            <span class="label">Hills</span>
+            <div class="toggle-group">
+                <label class="toggle-option">
+                    <input type="radio" name="hills" value="any" checked>
+                    <span>Any</span>
+                </label>
+                <label class="toggle-option">
+                    <input type="radio" name="hills" value="flat">
+                    <span>Prefer flat</span>
+                </label>
+            </div>
+        </section>
+
+        <button id="generate-btn" class="btn-primary" disabled>Generate route</button>
+
+        <div id="results" class="results hidden">
+            <div class="result-stats">
+                <span id="stat-distance">—</span>
+                <span class="stat-sep">·</span>
+                <span id="stat-time">—</span>
+            </div>
+            <p class="hint">Hit generate again for a different route.</p>
+            <button id="export-btn" class="btn-secondary full">Export GPX</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
