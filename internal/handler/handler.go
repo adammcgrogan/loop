@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/adammcgrogan/loop/internal/gpx"
 	"github.com/adammcgrogan/loop/internal/ors"
@@ -26,6 +27,8 @@ func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store, adminU
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
+	h.store.LogEvent(r.Context(), store.EventPageView, clientIP(r), r.UserAgent(), r.Referer())
+
 	if err := h.tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Printf("template: %v", err)
@@ -45,6 +48,8 @@ func (h *Handler) Route(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to generate route", http.StatusBadGateway)
 		return
 	}
+
+	h.store.LogEvent(r.Context(), store.EventRouteGenerated, clientIP(r), r.UserAgent(), "")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(route)
@@ -79,6 +84,8 @@ func (h *Handler) Share(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.store.LogEvent(r.Context(), store.EventShareCreated, clientIP(r), r.UserAgent(), "")
+
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, `{"id":%q}`, id)
 }
@@ -110,6 +117,8 @@ func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to load share", http.StatusInternalServerError)
 		return
 	}
+
+	h.store.LogEvent(r.Context(), store.EventShareViewed, clientIP(r), r.UserAgent(), r.Referer())
 
 	var meta shareMeta
 	json.Unmarshal([]byte(metaStr), &meta)
@@ -160,4 +169,12 @@ func (h *Handler) Admin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Printf("admin template: %v", err)
 	}
+}
+
+// clientIP extracts the real client IP, respecting Railway's proxy headers.
+func clientIP(r *http.Request) string {
+	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+		return strings.Split(fwd, ",")[0]
+	}
+	return r.RemoteAddr
 }

@@ -11,22 +11,20 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: 14px;
             color: #1a1a1a;
-            background: #f5f5f5;
+            background: #f0f0f0;
             padding: 32px 24px;
         }
 
+        .page { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
         header {
-            max-width: 900px;
-            margin: 0 auto 28px;
             display: flex;
             align-items: baseline;
-            gap: 12px;
+            gap: 10px;
+            margin-bottom: 4px;
         }
-
         header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
         header span { font-size: 13px; color: #aaa; }
-
-        .page { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
         .section {
             background: white;
@@ -44,16 +42,19 @@
             margin-bottom: 14px;
         }
 
-        /* Stat cards */
-        .stat-row { display: flex; gap: 12px; }
+        /* Stat grids */
+        .stat-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .cols-4 { grid-template-columns: repeat(4, 1fr); }
+        .cols-3 { grid-template-columns: repeat(3, 1fr); }
 
         .stat-card {
-            flex: 1;
             background: #f7f7f7;
             border-radius: 10px;
-            padding: 16px;
+            padding: 14px 16px;
         }
-
         .stat-card .label {
             font-size: 11px;
             font-weight: 600;
@@ -62,45 +63,45 @@
             color: #bbb;
             margin-bottom: 6px;
         }
-
         .stat-card .value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        .stat-card .sub {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
         }
 
-        /* Pref bars */
-        .prefs { display: flex; gap: 20px; }
-        .pref-group { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        /* Two column layout */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-        .pref-row { display: flex; flex-direction: column; gap: 4px; }
+        /* Bar rows */
+        .pref-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+        .pref-row:last-child { margin-bottom: 0; }
+        .pref-meta { display: flex; justify-content: space-between; font-size: 13px; }
+        .pref-label { font-weight: 500; }
+        .pref-count { color: #aaa; font-size: 12px; }
+        .bar-track { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; background: #e84422; border-radius: 4px; }
 
-        .pref-meta {
+        /* Referrers */
+        .referrer-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-top: 1px solid #f0f0f0;
             font-size: 13px;
         }
-
-        .pref-label { font-weight: 500; }
-        .pref-count { color: #aaa; }
-
-        .bar-track {
-            height: 8px;
-            background: #f0f0f0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: #e84422;
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
+        .referrer-row:first-child { border-top: none; }
+        .referrer-host { font-weight: 500; }
+        .referrer-count { color: #aaa; }
 
         /* Table */
         table { width: 100%; border-collapse: collapse; }
-
         th {
             text-align: left;
             font-size: 11px;
@@ -110,115 +111,172 @@
             color: #bbb;
             padding: 0 0 10px;
         }
+        td { padding: 10px 0; border-top: 1px solid #f0f0f0; color: #333; font-size: 13px; }
+        td.mono { font-family: monospace; color: #888; }
+        td.bold { font-weight: 600; }
 
-        td {
-            padding: 10px 0;
-            border-top: 1px solid #f0f0f0;
-            color: #333;
-        }
-
-        td.id { font-family: monospace; font-size: 13px; color: #888; }
-        td.dist { font-weight: 600; }
-
-        .empty { color: #bbb; font-style: italic; padding: 16px 0; }
+        .empty { color: #bbb; font-style: italic; }
     </style>
 </head>
 <body>
+<div class="page">
+
     <header>
         <h1>Loop Admin</h1>
         <span>Metrics</span>
     </header>
 
-    <div class="page">
+    <div class="section">
+        <div class="section-title">Visits</div>
+        <div class="stat-grid cols-4">
+            <div class="stat-card">
+                <div class="label">Total visits</div>
+                <div class="value">{{.TotalVisits}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Unique visitors</div>
+                <div class="value">{{.UniqueVisitors}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Today</div>
+                <div class="value">{{.VisitsToday}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">This week</div>
+                <div class="value">{{.VisitsWeek}}</div>
+            </div>
+        </div>
+    </div>
 
+    <div class="section">
+        <div class="section-title">Routes generated</div>
+        <div class="stat-grid cols-3">
+            <div class="stat-card">
+                <div class="label">All time</div>
+                <div class="value">{{.RoutesTotal}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Today</div>
+                <div class="value">{{.RoutesToday}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">This week</div>
+                <div class="value">{{.RoutesWeek}}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Shares</div>
+        <div class="stat-grid cols-3">
+            <div class="stat-card">
+                <div class="label">All time</div>
+                <div class="value">{{.SharesTotal}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Today</div>
+                <div class="value">{{.SharesToday}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">This week</div>
+                <div class="value">{{.SharesWeek}}</div>
+                <div class="sub">Avg distance {{printf "%.1f" .AvgDistanceKm}} km</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="two-col">
         <div class="section">
-            <div class="section-title">Shares</div>
-            <div class="stat-row">
-                <div class="stat-card">
-                    <div class="label">All time</div>
-                    <div class="value">{{.Total}}</div>
+            <div class="section-title">Device</div>
+            <div class="pref-row">
+                <div class="pref-meta">
+                    <span class="pref-label">Desktop</span>
+                    <span class="pref-count">{{.DesktopPct}}%</span>
                 </div>
-                <div class="stat-card">
-                    <div class="label">Today</div>
-                    <div class="value">{{.Today}}</div>
+                <div class="bar-track"><div class="bar-fill" style="width:{{.DesktopPct}}%"></div></div>
+            </div>
+            <div class="pref-row">
+                <div class="pref-meta">
+                    <span class="pref-label">Mobile</span>
+                    <span class="pref-count">{{.MobilePct}}%</span>
                 </div>
-                <div class="stat-card">
-                    <div class="label">This week</div>
-                    <div class="value">{{.ThisWeek}}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">Avg distance</div>
-                    <div class="value">{{printf "%.1f" (divf .AvgDistance 1000)}} <span style="font-size:18px;font-weight:500;color:#aaa">km</span></div>
-                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:{{.MobilePct}}%"></div></div>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">Preferences</div>
-            <div class="prefs">
-                <div class="pref-group">
-                    {{range .BySurface}}
-                    <div class="pref-row">
-                        <div class="pref-meta">
-                            <span class="pref-label">{{.Label}}</span>
-                            <span class="pref-count">{{.Count}} ({{.Percent}}%)</span>
-                        </div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {{.Percent}}%"></div>
-                        </div>
-                    </div>
-                    {{else}}
-                    <p class="empty">No data yet.</p>
-                    {{end}}
+            <div class="section-title">Top referrers</div>
+            {{if .TopReferrers}}
+                {{range .TopReferrers}}
+                <div class="referrer-row">
+                    <span class="referrer-host">{{.Host}}</span>
+                    <span class="referrer-count">{{.Count}}</span>
                 </div>
-                <div class="pref-group">
-                    {{range .ByHills}}
-                    <div class="pref-row">
-                        <div class="pref-meta">
-                            <span class="pref-label">{{.Label}}</span>
-                            <span class="pref-count">{{.Count}} ({{.Percent}}%)</span>
-                        </div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {{.Percent}}%"></div>
-                        </div>
-                    </div>
-                    {{else}}
-                    <p class="empty">No data yet.</p>
-                    {{end}}
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">Recent shares</div>
-            {{if .Recent}}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Distance</th>
-                        <th>Surface</th>
-                        <th>Hills</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .Recent}}
-                    <tr>
-                        <td class="id">{{.ID}}</td>
-                        <td class="dist">{{.DistanceKm}}</td>
-                        <td>{{.Surface}}</td>
-                        <td>{{.Hills}}</td>
-                        <td>{{.CreatedAt.Format "2 Jan 06, 15:04"}}</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+                {{end}}
             {{else}}
-            <p class="empty">No shares yet.</p>
+                <p class="empty">No referrer data yet.</p>
             {{end}}
         </div>
-
     </div>
+
+    <div class="two-col">
+        <div class="section">
+            <div class="section-title">Surface preference</div>
+            {{range .BySurface}}
+            <div class="pref-row">
+                <div class="pref-meta">
+                    <span class="pref-label">{{.Label}}</span>
+                    <span class="pref-count">{{.Count}} ({{.Percent}}%)</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:{{.Percent}}%"></div></div>
+            </div>
+            {{else}}<p class="empty">No data yet.</p>{{end}}
+        </div>
+
+        <div class="section">
+            <div class="section-title">Hills preference</div>
+            {{range .ByHills}}
+            <div class="pref-row">
+                <div class="pref-meta">
+                    <span class="pref-label">{{.Label}}</span>
+                    <span class="pref-count">{{.Count}} ({{.Percent}}%)</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:{{.Percent}}%"></div></div>
+            </div>
+            {{else}}<p class="empty">No data yet.</p>{{end}}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Recent shares</div>
+        {{if .Recent}}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Distance</th>
+                    <th>Surface</th>
+                    <th>Hills</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Recent}}
+                <tr>
+                    <td class="mono">{{.ID}}</td>
+                    <td class="bold">{{.DistanceKm}}</td>
+                    <td>{{.Surface}}</td>
+                    <td>{{.Hills}}</td>
+                    <td>{{.CreatedAt.Format "2 Jan 06, 15:04"}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p class="empty">No shares yet.</p>
+        {{end}}
+    </div>
+
+</div>
 </body>
 </html>
