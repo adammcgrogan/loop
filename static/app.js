@@ -58,9 +58,9 @@ document.getElementById('locate-btn').addEventListener('click', () => {
 });
 
 const distanceInput = document.getElementById('distance');
+const distanceDisplay = document.getElementById('distance-display');
 distanceInput.addEventListener('input', () => {
-    document.getElementById('distance-display').textContent =
-        `${(distanceInput.value / 1000).toFixed(1)} km`;
+    distanceDisplay.textContent = `${(distanceInput.value / 1000).toFixed(1)} km`;
 });
 
 document.getElementById('generate-btn').addEventListener('click', async () => {
