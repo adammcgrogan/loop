@@ -126,7 +126,7 @@ function displayRoute(geojson) {
     casingLayer = L.polyline(latlngs, { color: '#fff', weight: 7, opacity: 1 }).addTo(map);
     routeLayer  = L.polyline(latlngs, { color: '#e84422', weight: 4, opacity: 1 }).addTo(map);
 
-    map.fitBounds(routeLayer.getBounds(), { padding: [40, 340] });
+    map.fitBounds(routeLayer.getBounds(), { paddingTopLeft: [344, 60], paddingBottomRight: [60, 60] });
 
     arrowLayer = L.polylineDecorator(routeLayer, {
         patterns: [{
