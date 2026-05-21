@@ -22,8 +22,12 @@ const baseTile = L.tileLayer(tileConfigs.street, {
 }).addTo(map);
 
 document.addEventListener('change', e => {
+    console.log('[mapstyle] change event:', e.target.name, e.target.value);
     if (e.target.name !== 'mapstyle') return;
-    baseTile.setUrl(tileConfigs[e.target.value]);
+    const url = tileConfigs[e.target.value];
+    console.log('[mapstyle] switching to:', url);
+    baseTile.setUrl(url);
+    console.log('[mapstyle] setUrl called');
 });
 
 let marker = null;
