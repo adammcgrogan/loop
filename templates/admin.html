@@ -248,6 +248,56 @@
     </div>
 
     <div class="section">
+        <div class="section-title">System</div>
+        <div class="stat-grid cols-4">
+            <div class="stat-card">
+                <div class="label">Load avg (1m)</div>
+                <div class="value">{{printf "%.2f" .Sys.LoadAvg1}}</div>
+                <div class="sub">5m {{printf "%.2f" .Sys.LoadAvg5}} · 15m {{printf "%.2f" .Sys.LoadAvg15}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Memory used</div>
+                <div class="value">{{printf "%.0f" .Sys.MemUsedMB}} <span style="font-size:16px;font-weight:500;color:#aaa">MB</span></div>
+                <div class="sub">of {{printf "%.0f" .Sys.MemTotalMB}} MB ({{.Sys.MemUsedPct}}%)</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">System uptime</div>
+                <div class="value" style="font-size:22px">{{.Sys.SysUptime}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">App uptime</div>
+                <div class="value" style="font-size:22px">{{.Sys.AppUptime}}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Go runtime</div>
+        <div class="stat-grid cols-4">
+            <div class="stat-card">
+                <div class="label">Goroutines</div>
+                <div class="value">{{.Sys.Goroutines}}</div>
+                <div class="sub">GOMAXPROCS {{.Sys.GOMAXPROCS}}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Heap in use</div>
+                <div class="value">{{printf "%.1f" .Sys.HeapAllocMB}} <span style="font-size:16px;font-weight:500;color:#aaa">MB</span></div>
+                <div class="sub">{{printf "%.1f" .Sys.HeapSysMB}} MB reserved</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total allocated</div>
+                <div class="value">{{printf "%.0f" .Sys.TotalAllocMB}} <span style="font-size:16px;font-weight:500;color:#aaa">MB</span></div>
+                <div class="sub">cumulative</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">GC runs</div>
+                <div class="value">{{.Sys.GCRuns}}</div>
+                <div class="sub">{{printf "%.1f" .Sys.GCPauseMs}} ms total pause · last {{.Sys.LastGC}}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
         <div class="section-title">Recent shares</div>
         {{if .Recent}}
         <table>

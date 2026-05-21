@@ -8,10 +8,12 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/adammcgrogan/loop/internal/gpx"
 	"github.com/adammcgrogan/loop/internal/ors"
 	"github.com/adammcgrogan/loop/internal/store"
+	"github.com/adammcgrogan/loop/internal/sysmetrics"
 )
 
 type Handler struct {
@@ -20,10 +22,23 @@ type Handler struct {
 	store         *store.Store
 	adminUsername string
 	adminPassword string
+	startTime     time.Time
+}
+
+type adminTemplateData struct {
+	store.Metrics
+	Sys sysmetrics.Metrics
 }
 
 func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store, adminUsername, adminPassword string) *Handler {
-	return &Handler{tmpl: tmpl, ors: orsClient, store: st, adminUsername: adminUsername, adminPassword: adminPassword}
+	return &Handler{
+		tmpl:          tmpl,
+		ors:           orsClient,
+		store:         st,
+		adminUsername: adminUsername,
+		adminPassword: adminPassword,
+		startTime:     time.Now(),
+	}
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +180,12 @@ func (h *Handler) Admin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.tmpl.ExecuteTemplate(w, "admin.html", metrics); err != nil {
+	data := adminTemplateData{
+		Metrics: metrics,
+		Sys:     sysmetrics.Gather(h.startTime),
+	}
+
+	if err := h.tmpl.ExecuteTemplate(w, "admin.html", data); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Printf("admin template: %v", err)
 	}
