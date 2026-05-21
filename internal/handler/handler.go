@@ -17,11 +17,12 @@ type Handler struct {
 	tmpl          *template.Template
 	ors           *ors.Client
 	store         *store.Store
+	adminUsername string
 	adminPassword string
 }
 
-func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store, adminPassword string) *Handler {
-	return &Handler{tmpl: tmpl, ors: orsClient, store: st, adminPassword: adminPassword}
+func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store, adminUsername, adminPassword string) *Handler {
+	return &Handler{tmpl: tmpl, ors: orsClient, store: st, adminUsername: adminUsername, adminPassword: adminPassword}
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
@@ -137,12 +138,12 @@ func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Admin(w http.ResponseWriter, r *http.Request) {
-	if h.adminPassword == "" {
+	if h.adminUsername == "" || h.adminPassword == "" {
 		http.Error(w, "Admin not configured", http.StatusForbidden)
 		return
 	}
-	_, pass, ok := r.BasicAuth()
-	if !ok || pass != h.adminPassword {
+	user, pass, ok := r.BasicAuth()
+	if !ok || user != h.adminUsername || pass != h.adminPassword {
 		w.Header().Set("WWW-Authenticate", `Basic realm="Loop Admin"`)
 		http.Error(w, "Unauthorised", http.StatusUnauthorized)
 		return
