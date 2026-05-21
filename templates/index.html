@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loop — Running Route Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -12,7 +15,7 @@
 
     <div class="panel">
         <div class="panel-header">
-            <h1>Loop</h1>
+            <h1>Loop<span class="wordmark-dot"></span></h1>
             <p class="tagline">Build a running loop from anywhere.</p>
         </div>
 
@@ -59,11 +62,17 @@
 
         <div id="results" class="results hidden">
             <div class="result-stats">
-                <span id="stat-distance">—</span>
-                <span class="stat-sep">·</span>
-                <span id="stat-time">—</span>
+                <div class="stat-block">
+                    <span id="stat-distance" class="stat-num">—</span>
+                    <span class="stat-unit">distance</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-block">
+                    <span id="stat-time" class="stat-num">—</span>
+                    <span class="stat-unit">est. time</span>
+                </div>
             </div>
-            <p class="hint">Hit generate again for a different route.</p>
+            <p class="hint">Tap generate again for a different route.</p>
             <div class="action-row">
                 <button id="share-btn" class="btn-secondary">Share</button>
                 <button id="export-btn" class="btn-secondary">Export GPX</button>
