@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loop — Admin</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            color: #1a1a1a;
+            background: #f5f5f5;
+            padding: 32px 24px;
+        }
+
+        header {
+            max-width: 900px;
+            margin: 0 auto 28px;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+        header span { font-size: 13px; color: #aaa; }
+
+        .page { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #aaa;
+            margin-bottom: 14px;
+        }
+
+        /* Stat cards */
+        .stat-row { display: flex; gap: 12px; }
+
+        .stat-card {
+            flex: 1;
+            background: #f7f7f7;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .stat-card .label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #bbb;
+            margin-bottom: 6px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        /* Pref bars */
+        .prefs { display: flex; gap: 20px; }
+        .pref-group { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+        .pref-row { display: flex; flex-direction: column; gap: 4px; }
+
+        .pref-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .pref-label { font-weight: 500; }
+        .pref-count { color: #aaa; }
+
+        .bar-track {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #e84422;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #bbb;
+            padding: 0 0 10px;
+        }
+
+        td {
+            padding: 10px 0;
+            border-top: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        td.id { font-family: monospace; font-size: 13px; color: #888; }
+        td.dist { font-weight: 600; }
+
+        .empty { color: #bbb; font-style: italic; padding: 16px 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Loop Admin</h1>
+        <span>Metrics</span>
+    </header>
+
+    <div class="page">
+
+        <div class="section">
+            <div class="section-title">Shares</div>
+            <div class="stat-row">
+                <div class="stat-card">
+                    <div class="label">All time</div>
+                    <div class="value">{{.Total}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Today</div>
+                    <div class="value">{{.Today}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">This week</div>
+                    <div class="value">{{.ThisWeek}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg distance</div>
+                    <div class="value">{{printf "%.1f" (divf .AvgDistance 1000)}} <span style="font-size:18px;font-weight:500;color:#aaa">km</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Preferences</div>
+            <div class="prefs">
+                <div class="pref-group">
+                    {{range .BySurface}}
+                    <div class="pref-row">
+                        <div class="pref-meta">
+                            <span class="pref-label">{{.Label}}</span>
+                            <span class="pref-count">{{.Count}} ({{.Percent}}%)</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {{.Percent}}%"></div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <p class="empty">No data yet.</p>
+                    {{end}}
+                </div>
+                <div class="pref-group">
+                    {{range .ByHills}}
+                    <div class="pref-row">
+                        <div class="pref-meta">
+                            <span class="pref-label">{{.Label}}</span>
+                            <span class="pref-count">{{.Count}} ({{.Percent}}%)</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {{.Percent}}%"></div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <p class="empty">No data yet.</p>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Recent shares</div>
+            {{if .Recent}}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Distance</th>
+                        <th>Surface</th>
+                        <th>Hills</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Recent}}
+                    <tr>
+                        <td class="id">{{.ID}}</td>
+                        <td class="dist">{{.DistanceKm}}</td>
+                        <td>{{.Surface}}</td>
+                        <td>{{.Hills}}</td>
+                        <td>{{.CreatedAt.Format "2 Jan 06, 15:04"}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+            {{else}}
+            <p class="empty">No shares yet.</p>
+            {{end}}
+        </div>
+
+    </div>
+</body>
+</html>

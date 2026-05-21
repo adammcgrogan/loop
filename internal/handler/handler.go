@@ -14,13 +14,14 @@ import (
 )
 
 type Handler struct {
-	tmpl  *template.Template
-	ors   *ors.Client
-	store *store.Store
+	tmpl          *template.Template
+	ors           *ors.Client
+	store         *store.Store
+	adminPassword string
 }
 
-func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store) *Handler {
-	return &Handler{tmpl: tmpl, ors: orsClient, store: st}
+func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store, adminPassword string) *Handler {
+	return &Handler{tmpl: tmpl, ors: orsClient, store: st, adminPassword: adminPassword}
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +124,7 @@ func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
 
 	data := sharePageData{
 		DistanceKm: fmt.Sprintf("%.1f km", float64(meta.Distance)/1000),
-		TimeMin:    meta.Distance * 6 / 1000, // 6 min/km average running pace
+		TimeMin:    meta.Distance * 6 / 1000,
 		Surface:    surface,
 		Hills:      hills,
 		RouteJSON:  template.JS(route),
@@ -132,5 +133,30 @@ func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
 	if err := h.tmpl.ExecuteTemplate(w, "share.html", data); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Printf("share template: %v", err)
+	}
+}
+
+func (h *Handler) Admin(w http.ResponseWriter, r *http.Request) {
+	if h.adminPassword == "" {
+		http.Error(w, "Admin not configured", http.StatusForbidden)
+		return
+	}
+	_, pass, ok := r.BasicAuth()
+	if !ok || pass != h.adminPassword {
+		w.Header().Set("WWW-Authenticate", `Basic realm="Loop Admin"`)
+		http.Error(w, "Unauthorised", http.StatusUnauthorized)
+		return
+	}
+
+	metrics, err := h.store.Metrics(r.Context())
+	if err != nil {
+		log.Printf("admin metrics: %v", err)
+		http.Error(w, "failed to load metrics", http.StatusInternalServerError)
+		return
+	}
+
+	if err := h.tmpl.ExecuteTemplate(w, "admin.html", metrics); err != nil {
+		http.Error(w, "template error", http.StatusInternalServerError)
+		log.Printf("admin template: %v", err)
 	}
 }
