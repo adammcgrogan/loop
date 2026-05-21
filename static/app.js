@@ -21,13 +21,11 @@ const baseTile = L.tileLayer(tileConfigs.street, {
     maxZoom: 19,
 }).addTo(map);
 
-document.addEventListener('change', e => {
-    console.log('[mapstyle] change event:', e.target.name, e.target.value);
-    if (e.target.name !== 'mapstyle') return;
-    const url = tileConfigs[e.target.value];
-    console.log('[mapstyle] switching to:', url);
-    baseTile.setUrl(url);
-    console.log('[mapstyle] setUrl called');
+document.querySelectorAll('input[name="mapstyle"]').forEach(input => {
+    input.closest('label').addEventListener('click', () => {
+        console.log('[mapstyle] switching to:', input.value);
+        baseTile.setUrl(tileConfigs[input.value]);
+    });
 });
 
 let marker = null;
