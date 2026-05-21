@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"time"
 
@@ -19,6 +20,10 @@ type Store struct {
 }
 
 func New(ctx context.Context, databaseURL string) (*Store, error) {
+	if databaseURL == "" {
+		log.Println("store: no DATABASE_URL set — sharing and analytics disabled")
+		return &Store{}, nil
+	}
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("connect: %w", err)
@@ -59,6 +64,9 @@ const (
 // LogEvent records an analytics event. Errors are silently dropped so a
 // logging failure never affects the user-facing request.
 func (s *Store) LogEvent(ctx context.Context, eventType, ip, userAgent, referrer string) {
+	if s.pool == nil {
+		return
+	}
 	s.pool.Exec(ctx,
 		"INSERT INTO events (type, ip, user_agent, referrer) VALUES ($1, $2, $3, $4)",
 		eventType, ip, userAgent, referrer,
@@ -66,6 +74,9 @@ func (s *Store) LogEvent(ctx context.Context, eventType, ip, userAgent, referrer
 }
 
 func (s *Store) Save(ctx context.Context, route, meta string) (string, error) {
+	if s.pool == nil {
+		return "", errors.New("sharing unavailable: no database configured")
+	}
 	id := newID()
 	_, err := s.pool.Exec(ctx,
 		"INSERT INTO shares (id, route, meta) VALUES ($1, $2, $3)",
@@ -75,6 +86,9 @@ func (s *Store) Save(ctx context.Context, route, meta string) (string, error) {
 }
 
 func (s *Store) Get(ctx context.Context, id string) (route, meta string, err error) {
+	if s.pool == nil {
+		return "", "", ErrNotFound
+	}
 	row := s.pool.QueryRow(ctx,
 		"SELECT route, meta FROM shares WHERE id = $1", id,
 	)
@@ -134,6 +148,9 @@ type Metrics struct {
 }
 
 func (s *Store) Metrics(ctx context.Context) (Metrics, error) {
+	if s.pool == nil {
+		return Metrics{}, errors.New("metrics unavailable: no database configured")
+	}
 	var m Metrics
 
 	// Visit counts
