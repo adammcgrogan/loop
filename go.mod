@@ -1,3 +1,3 @@
-module github.com/adammcgrogan/circuit
+module github.com/adammcgrogan/loop
 
 go 1.22

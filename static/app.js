@@ -150,7 +150,7 @@ document.getElementById('export-btn').addEventListener('click', async () => {
         const url = URL.createObjectURL(await resp.blob());
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'circuit-route.gpx';
+        a.download = 'loop-route.gpx';
         a.click();
         URL.revokeObjectURL(url);
     } catch (err) {

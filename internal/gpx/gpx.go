@@ -17,7 +17,7 @@ func Build(req Request) string {
 
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
-	b.WriteString(`<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="circuit">` + "\n")
+	b.WriteString(`<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="loop">` + "\n")
 	b.WriteString("  <trk>\n")
 	fmt.Fprintf(&b, "    <name>%s</name>\n", req.Name)
 	b.WriteString("    <trkseg>\n")

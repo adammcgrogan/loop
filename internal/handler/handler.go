@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/adammcgrogan/circuit/internal/gpx"
-	"github.com/adammcgrogan/circuit/internal/ors"
+	"github.com/adammcgrogan/loop/internal/gpx"
+	"github.com/adammcgrogan/loop/internal/ors"
 )
 
 type Handler struct {

@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/adammcgrogan/circuit/internal/handler"
-	"github.com/adammcgrogan/circuit/internal/ors"
+	"github.com/adammcgrogan/loop/internal/handler"
+	"github.com/adammcgrogan/loop/internal/ors"
 )
 
 //go:embed templates static
