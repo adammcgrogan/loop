@@ -39,7 +39,6 @@ func main() {
 	mux.HandleFunc("GET /share/{id}", h.SharePage)
 	mux.HandleFunc("POST /api/route", h.Route)
 	mux.HandleFunc("POST /api/share", h.Share)
-	mux.HandleFunc("GET /api/share/{id}", h.ShareData)
 	mux.HandleFunc("POST /api/export/gpx", h.ExportGPX)
 
 	log.Printf("listening on :%s", port)

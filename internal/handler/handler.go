@@ -60,7 +60,6 @@ func (h *Handler) ExportGPX(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(gpx.Build(req)))
 }
 
-// Share saves a generated route and returns a short share ID.
 func (h *Handler) Share(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Route json.RawMessage `json:"route"`
@@ -82,14 +81,27 @@ func (h *Handler) Share(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"id":%q}`, id)
 }
 
-// ShareData returns the stored route and meta for a given share ID.
-func (h *Handler) ShareData(w http.ResponseWriter, r *http.Request) {
+type shareMeta struct {
+	Distance int    `json:"distance"`
+	Surface  string `json:"surface"`
+	Hills    string `json:"hills"`
+}
+
+type sharePageData struct {
+	DistanceKm string
+	TimeMin    int
+	Surface    string
+	Hills      string
+	RouteJSON  template.JS
+}
+
+func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	route, meta, err := h.store.Get(r.Context(), id)
+	route, metaStr, err := h.store.Get(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			http.Error(w, "not found", http.StatusNotFound)
+			http.Error(w, "Route not found", http.StatusNotFound)
 			return
 		}
 		log.Printf("share get: %v", err)
@@ -97,14 +109,28 @@ func (h *Handler) ShareData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"route":%s,"meta":%s}`, route, meta)
-}
+	var meta shareMeta
+	json.Unmarshal([]byte(metaStr), &meta)
 
-// SharePage serves the app shell for shared route URLs; JS handles the rest.
-func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
-	if err := h.tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
+	surface := "Roads"
+	if meta.Surface == "trail" {
+		surface = "Trails"
+	}
+	hills := "Any"
+	if meta.Hills == "flat" {
+		hills = "Prefer flat"
+	}
+
+	data := sharePageData{
+		DistanceKm: fmt.Sprintf("%.1f km", float64(meta.Distance)/1000),
+		TimeMin:    meta.Distance * 6 / 1000, // 6 min/km average running pace
+		Surface:    surface,
+		Hills:      hills,
+		RouteJSON:  template.JS(route),
+	}
+
+	if err := h.tmpl.ExecuteTemplate(w, "share.html", data); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
-		log.Printf("template: %v", err)
+		log.Printf("share template: %v", err)
 	}
 }

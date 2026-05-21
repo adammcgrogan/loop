@@ -194,32 +194,3 @@ document.getElementById('export-btn').addEventListener('click', async () => {
     }
 });
 
-// Load a shared route when visiting /share/{id}
-const shareMatch = window.location.pathname.match(/^\/share\/([a-z0-9]+)$/);
-if (shareMatch) {
-    (async () => {
-        try {
-            const resp = await fetch(`/api/share/${shareMatch[1]}`);
-            if (!resp.ok) throw new Error('Share not found');
-
-            const { route, meta } = await resp.json();
-
-            if (meta.distance) {
-                distanceInput.value = meta.distance;
-                distanceDisplay.textContent = `${(meta.distance / 1000).toFixed(1)} km`;
-            }
-            if (meta.surface) {
-                const el = document.querySelector(`input[name="surface"][value="${meta.surface}"]`);
-                if (el) el.checked = true;
-            }
-            if (meta.hills) {
-                const el = document.querySelector(`input[name="hills"][value="${meta.hills}"]`);
-                if (el) el.checked = true;
-            }
-
-            displayRoute(route);
-        } catch (err) {
-            alert(`Could not load shared route: ${err.message}`);
-        }
-    })();
-}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loop — Shared Route</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 380px;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 260px;
+            pointer-events: none;
+        }
+
+        .body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        .brand p {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat {
+            background: #f7f7f7;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #bbb;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 11px;
+            background: #e84422;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-primary:hover { background: #c73118; }
+
+        .btn-secondary {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            background: #f2f2f2;
+            color: #1a1a1a;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .btn-secondary:hover { background: #e8e8e8; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div id="map"></div>
+        <div class="body">
+            <div class="brand">
+                <h1>Loop</h1>
+                <p>Shared running route</p>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Distance</span>
+                    <span class="stat-value">{{.DistanceKm}}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Est. time</span>
+                    <span class="stat-value">~{{.TimeMin}} min</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Surface</span>
+                    <span class="stat-value">{{.Surface}}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Hills</span>
+                    <span class="stat-value">{{.Hills}}</span>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn-primary" id="export-btn">Export GPX</button>
+                <a href="/" class="btn-secondary">Create your own loop →</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+    <script>
+        const geojson = {{.RouteJSON}};
+        const coords  = geojson.features[0].geometry.coordinates;
+        const latlngs = coords.map(([lng, lat]) => [lat, lng]);
+
+        const map = L.map('map', {
+            dragging: false, touchZoom: false, scrollWheelZoom: false,
+            boxZoom: false, keyboard: false, zoomControl: false, attributionControl: false,
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+        L.polyline(latlngs, { color: '#fff', weight: 7, opacity: 1 }).addTo(map);
+        const route = L.polyline(latlngs, { color: '#e84422', weight: 4, opacity: 1 }).addTo(map);
+
+        L.polylineDecorator(route, {
+            patterns: [{ offset: '5%', repeat: '10%', symbol: L.Symbol.arrowHead({
+                pixelSize: 10, polygon: true,
+                pathOptions: { fillOpacity: 1, fillColor: '#fff', color: '#e84422', weight: 1 },
+            })}],
+        }).addTo(map);
+
+        const icon = L.divIcon({
+            className: '',
+            html: `<div style="width:18px;height:18px;border-radius:50%;background:#e84422;border:3px solid #fff;box-shadow:0 0 0 2px #e84422"></div>`,
+            iconSize: [18, 18], iconAnchor: [9, 9],
+        });
+        L.marker(latlngs[0], { icon }).addTo(map);
+
+        map.fitBounds(route.getBounds(), { padding: [24, 24] });
+
+        document.getElementById('export-btn').addEventListener('click', async () => {
+            const resp = await fetch('/api/export/gpx', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ coordinates: coords }),
+            });
+            if (!resp.ok) { alert('Export failed'); return; }
+            const url = URL.createObjectURL(await resp.blob());
+            const a = document.createElement('a');
+            a.href = url; a.download = 'loop-route.gpx'; a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
