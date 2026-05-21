@@ -4,13 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loop — Shared Route</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
+        :root {
+            --accent:       #e84422;
+            --accent-hover: #d03c1e;
+            --text-1: #111111;
+            --text-2: #555555;
+            --text-3: #aaaaaa;
+            --surface: #ffffff;
+            --surface-raised: #f6f6f6;
+            --border: #e8e8e8;
+            --r-sm: 8px;
+            --r-md: 12px;
+            --r-lg: 20px;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f0f0f0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: #f0efed;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -20,39 +38,66 @@
         }
 
         .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.1);
+            background: var(--surface);
+            border-radius: var(--r-lg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04),
+                        0 8px 24px rgba(0,0,0,0.08),
+                        0 24px 48px rgba(0,0,0,0.06);
             width: 100%;
             max-width: 380px;
             overflow: hidden;
         }
 
+        /* Map */
         #map {
             width: 100%;
-            height: 260px;
+            height: 280px;
             pointer-events: none;
+            display: block;
         }
 
+        /* Card body */
         .body {
-            padding: 20px;
+            padding: 22px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 18px;
         }
 
-        .brand h1 {
-            font-size: 18px;
+        /* Brand row */
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-name {
+            font-size: 20px;
             font-weight: 700;
-            letter-spacing: -0.4px;
+            letter-spacing: -0.5px;
+            color: var(--text-1);
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
 
-        .brand p {
+        .brand-name::after {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .brand-sub {
             font-size: 12px;
-            color: #aaa;
-            margin-top: 2px;
+            color: var(--text-3);
+            font-weight: 400;
         }
 
+        /* Stats grid */
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -60,28 +105,36 @@
         }
 
         .stat {
-            background: #f7f7f7;
-            border-radius: 10px;
-            padding: 12px 14px;
+            background: var(--surface-raised);
+            border-radius: var(--r-sm);
+            padding: 13px 14px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
         }
 
         .stat-label {
             font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: #bbb;
+            letter-spacing: 0.7px;
+            color: var(--text-3);
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            color: #1a1a1a;
+            letter-spacing: -0.6px;
+            color: var(--text-1);
+            line-height: 1;
         }
 
+        .stat-value.text {
+            font-size: 16px;
+            letter-spacing: -0.2px;
+        }
+
+        /* Actions */
         .actions {
             display: flex;
             flex-direction: column;
@@ -89,34 +142,71 @@
         }
 
         .btn-primary {
+            position: relative;
             width: 100%;
-            padding: 11px;
-            background: #e84422;
+            padding: 12px;
+            background: var(--accent);
             color: white;
             border: none;
-            border-radius: 9px;
+            border-radius: var(--r-md);
+            font-family: inherit;
             font-size: 14px;
             font-weight: 600;
+            letter-spacing: -0.1px;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+            box-shadow: 0 1px 2px rgba(232,68,34,0.25), 0 4px 12px rgba(232,68,34,0.18);
+            overflow: hidden;
         }
 
-        .btn-primary:hover { background: #c73118; }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(232,68,34,0.3), 0 8px 20px rgba(232,68,34,0.22);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary.loading {
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .btn-primary.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.65s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .btn-secondary {
             display: block;
             text-align: center;
-            padding: 10px;
-            background: #f2f2f2;
-            color: #1a1a1a;
-            border-radius: 9px;
+            padding: 11px;
+            background: var(--surface-raised);
+            color: var(--text-1);
+            border: none;
+            border-radius: var(--r-sm);
+            font-family: inherit;
             font-size: 13px;
             font-weight: 500;
             text-decoration: none;
-            transition: background 0.15s;
+            cursor: pointer;
+            transition: background 0.12s;
         }
 
-        .btn-secondary:hover { background: #e8e8e8; }
+        .btn-secondary:hover { background: #ebebeb; }
     </style>
 </head>
 <body>
@@ -124,9 +214,10 @@
         <div id="map"></div>
         <div class="body">
             <div class="brand">
-                <h1>Loop</h1>
-                <p>Shared running route</p>
+                <span class="brand-name">Loop</span>
+                <span class="brand-sub">Shared running route</span>
             </div>
+
             <div class="stats">
                 <div class="stat">
                     <span class="stat-label">Distance</span>
@@ -138,16 +229,17 @@
                 </div>
                 <div class="stat">
                     <span class="stat-label">Surface</span>
-                    <span class="stat-value">{{.Surface}}</span>
+                    <span class="stat-value text">{{.Surface}}</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Hills</span>
-                    <span class="stat-value">{{.Hills}}</span>
+                    <span class="stat-value text">{{.Hills}}</span>
                 </div>
             </div>
+
             <div class="actions">
                 <button class="btn-primary" id="export-btn">Export GPX</button>
-                <a href="/" class="btn-secondary">Create your own loop →</a>
+                <a href="/" class="btn-secondary">Build your own loop →</a>
             </div>
         </div>
     </div>
@@ -178,24 +270,30 @@
 
         const icon = L.divIcon({
             className: '',
-            html: `<div style="width:18px;height:18px;border-radius:50%;background:#e84422;border:3px solid #fff;box-shadow:0 0 0 2px #e84422"></div>`,
+            html: `<div style="width:18px;height:18px;border-radius:50%;background:#e84422;border:3px solid #fff;box-shadow:0 0 0 2px #e84422,0 2px 6px rgba(0,0,0,0.25)"></div>`,
             iconSize: [18, 18], iconAnchor: [9, 9],
         });
         L.marker(latlngs[0], { icon }).addTo(map);
 
-        map.fitBounds(route.getBounds(), { padding: [24, 24] });
+        map.fitBounds(route.getBounds(), { padding: [28, 28] });
 
         document.getElementById('export-btn').addEventListener('click', async () => {
-            const resp = await fetch('/api/export/gpx', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ coordinates: coords }),
-            });
-            if (!resp.ok) { alert('Export failed'); return; }
-            const url = URL.createObjectURL(await resp.blob());
-            const a = document.createElement('a');
-            a.href = url; a.download = 'loop-route.gpx'; a.click();
-            URL.revokeObjectURL(url);
+            const btn = document.getElementById('export-btn');
+            btn.classList.add('loading');
+            try {
+                const resp = await fetch('/api/export/gpx', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coordinates: coords }),
+                });
+                if (!resp.ok) { alert('Export failed'); return; }
+                const url = URL.createObjectURL(await resp.blob());
+                const a = document.createElement('a');
+                a.href = url; a.download = 'loop-route.gpx'; a.click();
+                URL.revokeObjectURL(url);
+            } finally {
+                btn.classList.remove('loading');
+            }
         });
     </script>
 </body>
