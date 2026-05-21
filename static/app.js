@@ -6,7 +6,9 @@ const state = {
     geojson: null,
 };
 
-const map = L.map('map', { zoomControl: true }).setView([51.505, -0.09], 13);
+const map = L.map('map', { zoomControl: false }).setView([51.505, -0.09], 13);
+
+L.control.zoom({ position: 'topright' }).addTo(map);
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
@@ -28,9 +30,8 @@ function setLocation(lat, lng) {
         html: `<div style="
             width:22px;height:22px;border-radius:50%;
             background:#e84422;border:3px solid #fff;
-            box-shadow:0 0 0 2px #e84422,0 2px 6px rgba(0,0,0,0.3);
-            display:flex;align-items:center;justify-content:center;
-        "><div style="width:6px;height:6px;border-radius:50%;background:#fff"></div></div>`,
+            box-shadow:0 0 0 2px #e84422,0 2px 8px rgba(0,0,0,0.25);
+        "></div>`,
         iconSize: [22, 22],
         iconAnchor: [11, 11],
     });
@@ -67,7 +68,7 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
     state.seed = Math.floor(Math.random() * 9999) + 1;
 
     const btn = document.getElementById('generate-btn');
-    btn.textContent = 'Generating...';
+    btn.classList.add('loading');
     btn.disabled = true;
 
     try {
@@ -89,7 +90,7 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
     } catch (err) {
         alert(`Could not generate route: ${err.message}`);
     } finally {
-        btn.textContent = 'Generate route';
+        btn.classList.remove('loading');
         btn.disabled = false;
     }
 });
@@ -113,7 +114,7 @@ function displayRoute(geojson) {
     casingLayer = L.polyline(latlngs, { color: '#fff', weight: 7, opacity: 1 }).addTo(map);
     routeLayer  = L.polyline(latlngs, { color: '#e84422', weight: 4, opacity: 1 }).addTo(map);
 
-    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+    map.fitBounds(routeLayer.getBounds(), { padding: [40, 340] });
 
     arrowLayer = L.polylineDecorator(routeLayer, {
         patterns: [{
@@ -141,7 +142,8 @@ document.getElementById('share-btn').addEventListener('click', async () => {
     if (!state.geojson || !state.lat) return;
 
     const btn = document.getElementById('share-btn');
-    btn.textContent = 'Sharing...';
+    const original = btn.textContent;
+    btn.textContent = 'Sharing…';
     btn.disabled = true;
 
     try {
@@ -163,10 +165,10 @@ document.getElementById('share-btn').addEventListener('click', async () => {
         const url = `${window.location.origin}/share/${id}`;
         await navigator.clipboard.writeText(url);
         btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Share'; btn.disabled = false; }, 2000);
+        setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
     } catch (err) {
         alert(`Could not share route: ${err.message}`);
-        btn.textContent = 'Share';
+        btn.textContent = original;
         btn.disabled = false;
     }
 });
@@ -193,4 +195,3 @@ document.getElementById('export-btn').addEventListener('click', async () => {
         alert(`Could not export GPX: ${err.message}`);
     }
 });
-
