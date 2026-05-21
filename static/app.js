@@ -10,29 +10,20 @@ const map = L.map('map', { zoomControl: false }).setView([51.505, -0.09], 13);
 
 L.control.zoom({ position: 'topright' }).addTo(map);
 
-const tileLayers = {
-    street: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
-        maxZoom: 19,
-    }),
-    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-        maxZoom: 19,
-    }),
-    topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-        maxZoom: 17,
-    }),
+const tileConfigs = {
+    street:    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    topo:      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
 };
 
-let activeLayer = tileLayers.street;
-activeLayer.addTo(map);
+const baseTile = L.tileLayer(tileConfigs.street, {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
+    maxZoom: 19,
+}).addTo(map);
 
 document.addEventListener('change', e => {
     if (e.target.name !== 'mapstyle') return;
-    map.removeLayer(activeLayer);
-    activeLayer = tileLayers[e.target.value];
-    activeLayer.addTo(map);
+    baseTile.setUrl(tileConfigs[e.target.value]);
 });
 
 let marker = null;
