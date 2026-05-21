@@ -1,5 +1,3 @@
-console.log('[loop] app.js v2775107 loaded');
-
 const state = {
     lat: null,
     lng: null,
@@ -25,7 +23,6 @@ const baseTile = L.tileLayer(tileConfigs.street, {
 
 document.querySelectorAll('input[name="mapstyle"]').forEach(input => {
     input.closest('label').addEventListener('click', () => {
-        console.log('[mapstyle] switching to:', input.value);
         baseTile.setUrl(tileConfigs[input.value]);
     });
 });
