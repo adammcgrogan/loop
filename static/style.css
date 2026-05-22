@@ -595,3 +595,161 @@ input[type="range"] {
 .hidden {
     display: none !important;
 }
+
+/* Inline disclaimer (mobile-only — replaces the separate panel-disclaimer card) */
+.disclaimer-inline {
+    display: none;
+    font-size: 11px;
+    color: var(--text-3);
+    line-height: 1.5;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.disclaimer-inline a {
+    color: var(--text-2);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+/* ── Mobile / narrow viewports ───────────────────────── */
+
+@media (max-width: 640px) {
+    /* Dock the panel to the bottom so the map and zoom controls stay
+       reachable at the top of the screen. */
+    .panel {
+        top: auto;
+        left: 8px;
+        right: 8px;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: auto;
+        /* Cap the sheet at ~half the viewport so the map dominates;
+           the panel content stays scrollable. */
+        max-height: min(50vh, calc(100vh - 200px));
+        padding: 14px 14px 12px;
+        gap: 12px;
+        border-radius: var(--r-lg);
+    }
+
+    /* The separate floating disclaimer card would obscure the panel —
+       its content is moved inline into the panel on mobile. */
+    .panel-disclaimer {
+        display: none;
+    }
+
+    .disclaimer-inline {
+        display: block;
+        font-size: 10.5px;
+        padding-top: 10px;
+    }
+
+    /* Tighten section spacing. */
+    .field {
+        gap: 7px;
+    }
+
+    /* Header takes less room. */
+    .panel-header {
+        gap: 2px;
+    }
+
+    h1 {
+        font-size: 19px;
+    }
+
+    h1 .wordmark-logo {
+        width: 26px;
+        height: 26px;
+    }
+
+    .tagline {
+        font-size: 12px;
+    }
+
+    .field-value {
+        font-size: 16px;
+    }
+
+    .range-scale {
+        font-size: 10px;
+    }
+
+    .option-label {
+        font-size: 12.5px;
+    }
+
+    .option-sublabel {
+        font-size: 10.5px;
+    }
+
+    /* 16px font on inputs so iOS Safari doesn't auto-zoom on focus. */
+    .btn-primary,
+    .btn-secondary,
+    input[type="range"],
+    select,
+    input[type="text"],
+    input[type="number"] {
+        font-size: 16px;
+    }
+
+    .btn-primary {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .btn-secondary {
+        padding: 9px 10px;
+        font-size: 13px;
+    }
+
+    .toggle-option span {
+        padding: 7px 0;
+        font-size: 12.5px;
+    }
+
+    .results {
+        padding-top: 12px;
+        gap: 12px;
+    }
+
+    .result-stats .stat-num {
+        font-size: 17px;
+    }
+
+    .result-stats .stat-unit {
+        font-size: 10px;
+    }
+
+    /* Keep zoom buttons clear of the top edge / status bar. */
+    .leaflet-top {
+        top: max(0px, env(safe-area-inset-top));
+    }
+
+    /* Keep the attribution above the bottom-docked panel. */
+    .leaflet-bottom {
+        bottom: auto;
+        top: 8px;
+    }
+
+    .leaflet-bottom .leaflet-control-attribution {
+        border-radius: 0 0 0 6px;
+    }
+}
+
+/* Very small phones — tighten further. */
+@media (max-width: 380px) {
+    .panel {
+        padding: 12px 12px 10px;
+        gap: 10px;
+        max-height: min(48vh, calc(100vh - 180px));
+    }
+
+    h1 {
+        font-size: 18px;
+    }
+
+    .tagline {
+        font-size: 11.5px;
+    }
+}

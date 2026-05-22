@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Loop — Running Route Builder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 <body>
     <div id="map"></div>
@@ -108,6 +108,12 @@
                 <button id="export-btn" class="btn-secondary">Export</button>
             </div>
         </div>
+
+        <p class="disclaimer-inline">
+            Routes use <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a>
+            data via <a href="https://openrouteservice.org/" target="_blank" rel="noopener">OpenRouteService</a>.
+            Distance, est. time (~6 min/km) and ascent are approximations.
+        </p>
     </aside>
 
     <aside class="panel-disclaimer">
