@@ -42,18 +42,26 @@ type RouteRequest struct {
 }
 
 type body struct {
-	Coordinates [][]float64    `json:"coordinates"`
-	Elevation   bool           `json:"elevation"`
-	Options     *options       `json:"options,omitempty"`
-	Instructions bool          `json:"instructions"`
+	Coordinates  [][]float64 `json:"coordinates"`
+	Elevation    bool        `json:"elevation"`
+	Options      *options    `json:"options,omitempty"`
+	Instructions bool        `json:"instructions"`
 }
 
 type options struct {
 	ProfileParams *profileParams `json:"profile_params,omitempty"`
+	AvoidFeatures []string       `json:"avoid_features,omitempty"`
 }
 
 type profileParams struct {
-	Weightings map[string]int `json:"weightings"`
+	Weightings *weightings `json:"weightings,omitempty"`
+}
+
+// ORS foot profiles only accept `green` and `quiet` as weightings. Both run 0–1.
+// `steepness_difficulty` is a cycling-only param and is silently ignored here.
+type weightings struct {
+	Green float64 `json:"green,omitempty"`
+	Quiet float64 `json:"quiet,omitempty"`
 }
 
 type featureCollection struct {
@@ -74,8 +82,10 @@ type featureCollection struct {
 }
 
 func (c *Client) GenerateRoute(req RouteRequest) (json.RawMessage, error) {
+	// foot-walking biases toward pavements/sidewalks; foot-hiking uses paths,
+	// tracks and trails more readily. Surface alone drives this.
 	profile := "foot-walking"
-	if req.Surface == "trail" || req.Hills == "flat" {
+	if req.Surface == "trail" {
 		profile = "foot-hiking"
 	}
 	endpoint := fmt.Sprintf("%s/%s/geojson", baseURL, profile)
@@ -121,10 +131,7 @@ func (c *Client) polygonRoute(endpoint string, req RouteRequest) (json.RawMessag
 		angleJitter := rng.Float64()*0.3 + 0.1 // 0.1–0.4 rad per point
 		coords := polygonWaypoints(req.Lat, req.Lng, radius, n, baseAngle, angleJitter, rng)
 
-		b := body{Coordinates: coords, Elevation: true, Instructions: false}
-		if req.Hills == "flat" {
-			b.Options = &options{ProfileParams: &profileParams{Weightings: map[string]int{"steepness_difficulty": 3}}}
-		}
+		b := body{Coordinates: coords, Elevation: true, Instructions: false, Options: buildOptions(req)}
 
 		data, err := c.fetch(endpoint, b)
 		if err != nil {
@@ -135,8 +142,8 @@ func (c *Client) polygonRoute(endpoint string, req RouteRequest) (json.RawMessag
 		}
 
 		// Clip obvious dead-end spurs from the geometry before scoring.
-		cleaned, gotClean := clipSpurs(data)
-		got, overlap := analyse(cleaned)
+		cleaned, _ := clipSpurs(data)
+		got, overlap, ascent := analyse(cleaned)
 		if got == 0 {
 			break
 		}
@@ -149,13 +156,22 @@ func (c *Client) polygonRoute(endpoint string, req RouteRequest) (json.RawMessag
 
 		distErr := math.Abs(got-target) / target
 		score := distErr + overlap*2.0
-		_ = gotClean
+		if req.Hills == "flat" {
+			// Normalise by distance: ~10m ascent per km is flat, ~30m/km is hilly.
+			// Score penalty saturates around 0.5 for very hilly routes.
+			score += math.Min(0.6, (ascent/(got/1000))/40)
+		}
 		if score < bestScore {
 			bestScore = score
 			best = cleaned
 		}
 
-		if distErr <= 0.12 && overlap <= maxOverlapRatio {
+		// "Good enough" early-exit. Flatter mode keeps trying so we get a true best.
+		earlyExit := distErr <= 0.12 && overlap <= maxOverlapRatio
+		if req.Hills == "flat" {
+			earlyExit = false
+		}
+		if earlyExit {
 			return cleaned, nil
 		}
 
@@ -258,10 +274,7 @@ func (c *Client) tryLapRoute(endpoint string, req RouteRequest) (json.RawMessage
 	}
 	coords = append(coords, []float64{req.Lng, req.Lat})
 
-	b := body{Coordinates: coords, Elevation: true, Instructions: false}
-	if req.Hills == "flat" {
-		b.Options = &options{ProfileParams: &profileParams{Weightings: map[string]int{"steepness_difficulty": 3}}}
-	}
+	b := body{Coordinates: coords, Elevation: true, Instructions: false, Options: buildOptions(req)}
 
 	data, err := c.fetch(endpoint, b)
 	if err != nil {
@@ -362,19 +375,31 @@ func (c *Client) fetch(url string, b body) (json.RawMessage, error) {
 	return json.RawMessage(data), nil
 }
 
-// analyse returns the route's total distance and the fraction of its length
-// that retraces edges already travelled (out-and-back ratio).
-func analyse(data json.RawMessage) (distance, overlap float64) {
+// buildOptions translates user preferences into ORS request options.
+// Surface drives the profile *and* a green-weighting (trails prefer parks/woods).
+// avoid_features keeps the route off staircases — runners don't want stairs.
+func buildOptions(req RouteRequest) *options {
+	opts := &options{AvoidFeatures: []string{"steps"}}
+	if req.Surface == "trail" {
+		opts.ProfileParams = &profileParams{Weightings: &weightings{Green: 1.0}}
+	}
+	return opts
+}
+
+// analyse returns the route's total distance, the fraction of its length that
+// retraces edges already travelled (out-and-back ratio), and total positive
+// elevation gain in metres (computed from the geometry's z-coordinates).
+func analyse(data json.RawMessage) (distance, overlap, ascent float64) {
 	var fc featureCollection
 	if err := json.Unmarshal(data, &fc); err != nil || len(fc.Features) == 0 {
-		return 0, 0
+		return 0, 0, 0
 	}
 	f := fc.Features[0]
 	distance = f.Properties.Summary.Distance
 
 	coords := f.Geometry.Coordinates
 	if len(coords) < 2 {
-		return distance, 0
+		return distance, 0, 0
 	}
 
 	// Snap segments to a ~12m grid, keyed undirected so out-and-back
@@ -401,11 +426,17 @@ func analyse(data json.RawMessage) (distance, overlap float64) {
 			dup += l
 		}
 		edges[key] = true
+
+		if len(a) >= 3 && len(b) >= 3 {
+			if d := b[2] - a[2]; d > 0 {
+				ascent += d
+			}
+		}
 	}
 	if total == 0 {
-		return distance, 0
+		return distance, 0, ascent
 	}
-	return distance, dup / total
+	return distance, dup / total, ascent
 }
 
 // clipSpurs removes out-and-back dead-end spurs from the returned geometry.
