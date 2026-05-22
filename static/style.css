@@ -98,7 +98,8 @@ body {
     top: 20px;
     left: 20px;
     width: 304px;
-    max-height: calc(100vh - 40px);
+    /* Leave room at the bottom for the disclaimer card. */
+    max-height: calc(100vh - 130px);
     overflow-y: auto;
     scrollbar-width: none;
     background: var(--surface);
@@ -109,6 +110,33 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.panel-disclaimer {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 304px;
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-panel);
+    padding: 14px 18px;
+    z-index: 999;
+    font-size: 11px;
+    color: var(--text-3);
+    line-height: 1.55;
+}
+
+.panel-disclaimer a {
+    color: var(--text-2);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+.panel-disclaimer a:hover {
+    color: var(--text-1);
+    text-decoration-color: var(--text-3);
 }
 
 .panel::-webkit-scrollbar {
@@ -130,17 +158,15 @@ h1 {
     color: var(--text-1);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
 }
 
-h1 .wordmark-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
+h1 .wordmark-logo {
+    width: 32px;
+    height: 32px;
+    color: var(--accent);
     flex-shrink: 0;
-    margin-bottom: 1px;
 }
 
 .tagline {
@@ -522,6 +548,46 @@ input[type="range"] {
     font-size: 11.5px;
     color: var(--text-3);
     line-height: 1.4;
+}
+
+/* ── Toast ───────────────────────────────────────────── */
+
+.toast-container {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    align-items: center;
+}
+
+.toast {
+    background: rgba(20, 20, 20, 0.92);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    backdrop-filter: blur(8px);
+    max-width: min(80vw, 480px);
+    text-align: center;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.error {
+    background: rgba(170, 32, 18, 0.95);
 }
 
 /* ── Utility ─────────────────────────────────────────── */

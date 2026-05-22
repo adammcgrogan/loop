@@ -1,3 +1,32 @@
+const MAX_TOASTS = 3;
+
+function dismissToast(toast) {
+    if (!toast.isConnected) return;
+    toast.classList.remove('show');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+}
+
+function showToast(message, { error = false, duration = 4000 } = {}) {
+    const container = document.getElementById('toast-container');
+
+    // Dedupe: if the most recent toast says the same thing, just keep it.
+    const existing = container.querySelectorAll('.toast');
+    const last = existing[existing.length - 1];
+    if (last && last.textContent === message) return;
+
+    // Cap the stack: dismiss the oldest until we're under the limit.
+    while (container.querySelectorAll('.toast').length >= MAX_TOASTS) {
+        dismissToast(container.querySelector('.toast'));
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (error ? ' error' : '');
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => dismissToast(toast), duration);
+}
+
 const state = {
     lat: null,
     lng: null,
@@ -107,7 +136,7 @@ map.on('click', (e) => setLocation(e.latlng.lat, e.latlng.lng));
 
 document.getElementById('locate-btn').addEventListener('click', () => {
     if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser.');
+        showToast('Geolocation is not supported by your browser.', { error: true });
         return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -116,7 +145,7 @@ document.getElementById('locate-btn').addEventListener('click', () => {
             map.setView([latitude, longitude], 14);
             setLocation(latitude, longitude);
         },
-        () => alert('Unable to retrieve your location.')
+        () => showToast('Unable to retrieve your location.', { error: true })
     );
 });
 
@@ -147,10 +176,18 @@ async function generateRoute(triggerBtn) {
             }),
         });
 
-        if (!resp.ok) throw new Error(await resp.text());
+        if (resp.status === 429) {
+            const retry = parseInt(resp.headers.get('Retry-After') || '30', 10);
+            showToast(`Slow down — try again in ${retry}s.`, { error: true });
+            return;
+        }
+        if (!resp.ok) {
+            showToast("Couldn't build a route from here. Try a different start or distance.", { error: true });
+            return;
+        }
         displayRoute(await resp.json());
     } catch (err) {
-        alert(`Could not generate route: ${err.message}`);
+        showToast('Network error — please try again.', { error: true });
     } finally {
         primary.classList.remove('loading');
         primary.disabled = false;
@@ -170,7 +207,7 @@ function displayRoute(geojson) {
 
     const feature = geojson.features?.[0];
     if (!feature) {
-        alert('No route returned. Try a different location or distance.');
+        showToast('No route returned. Try a different location or distance.', { error: true });
         return;
     }
 
@@ -250,7 +287,7 @@ document.getElementById('share-btn').addEventListener('click', async () => {
         btn.textContent = 'Copied!';
         setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
     } catch (err) {
-        alert(`Could not share route: ${err.message}`);
+        showToast('Could not share route. Please try again.', { error: true });
         btn.textContent = original;
         btn.disabled = false;
     }
@@ -275,6 +312,6 @@ document.getElementById('export-btn').addEventListener('click', async () => {
         a.click();
         URL.revokeObjectURL(url);
     } catch (err) {
-        alert(`Could not export GPX: ${err.message}`);
+        showToast('Could not export GPX. Please try again.', { error: true });
     }
 });
