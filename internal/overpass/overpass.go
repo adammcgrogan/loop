@@ -191,14 +191,12 @@ func fetchOverpass(query string) ([]byte, error) {
 	return nil, lastErr
 }
 
-// score is lower-is-better. Combines distance to start with how cleanly
-// the perimeter divides the target distance.
+// score is lower-is-better. Just distance to the start — lap count adapts
+// to whatever perimeter we end up with, so we don't need to score by lap fit.
+// Scoring by lap fit previously biased toward small parks (lower lapPenalty)
+// over closer, larger parks like Wallace Park.
 func score(l Loop, lat, lng, target float64) float64 {
-	d := haversine(lat, lng, l.CentroidLat, l.CentroidLng)
-	laps := target / l.Perimeter
-	// Penalise non-integer lap counts and very short approaches.
-	lapPenalty := math.Abs(laps-math.Round(laps)) * l.Perimeter
-	return d + lapPenalty
+	return haversine(lat, lng, l.CentroidLat, l.CentroidLng)
 }
 
 func perimeter(coords [][2]float64) float64 {
