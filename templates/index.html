@@ -13,53 +13,79 @@
 <body>
     <div id="map"></div>
 
-    <div class="panel">
-        <div class="panel-header">
+    <aside class="panel">
+        <header class="panel-header">
             <h1>Loop<span class="wordmark-dot"></span></h1>
             <p class="tagline">Build a running loop from anywhere.</p>
-        </div>
+        </header>
 
-        <section>
-            <span class="label">Start location</span>
+        <section class="field">
+            <span class="field-label">Start</span>
             <button id="locate-btn" class="btn-secondary full">Use my location</button>
-            <p id="location-text" class="hint">Or click anywhere on the map.</p>
+            <div id="location-pill" class="pill hidden">
+                <span class="pill-dot"></span>
+                <span id="location-text"></span>
+            </div>
+            <p class="hint" id="location-empty-hint">Or click anywhere on the map.</p>
         </section>
 
-        <section>
-            <label class="label" for="distance">Distance — <span id="distance-display">5.0 km</span></label>
+        <section class="field">
+            <div class="field-head">
+                <label class="field-label" for="distance">Distance</label>
+                <span id="distance-display" class="field-value">5.0 km</span>
+            </div>
             <input type="range" id="distance" min="1000" max="30000" step="500" value="5000">
-        </section>
-
-        <section>
-            <span class="label">Surface</span>
-            <div class="toggle-group">
-                <label class="toggle-option">
-                    <input type="radio" name="surface" value="road" checked>
-                    <span>Roads</span>
-                </label>
-                <label class="toggle-option">
-                    <input type="radio" name="surface" value="trail">
-                    <span>Trails</span>
-                </label>
+            <div class="range-scale">
+                <span>1 km</span>
+                <span>30 km</span>
             </div>
         </section>
 
-        <section>
-            <span class="label">Hills</span>
-            <div class="toggle-group">
-                <label class="toggle-option">
-                    <input type="radio" name="hills" value="any" checked>
-                    <span>Any</span>
-                </label>
-                <label class="toggle-option">
-                    <input type="radio" name="hills" value="flat">
-                    <span>Prefer flat</span>
-                </label>
+        <section class="field">
+            <span class="field-label">Preferences</span>
+
+            <div class="option-row">
+                <span class="option-label">Surface</span>
+                <div class="toggle-group compact">
+                    <label class="toggle-option">
+                        <input type="radio" name="surface" value="road" checked>
+                        <span>Roads</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="surface" value="trail">
+                        <span>Trails</span>
+                    </label>
+                </div>
             </div>
+
+            <div class="option-row">
+                <span class="option-label">Hills</span>
+                <div class="toggle-group compact">
+                    <label class="toggle-option">
+                        <input type="radio" name="hills" value="any" checked>
+                        <span>Any</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="hills" value="flat">
+                        <span>Flatter</span>
+                    </label>
+                </div>
+            </div>
+
+            <label class="option-row clickable">
+                <span class="option-label">
+                    Allow laps
+                    <span class="option-sublabel">Loop nearby parks. Slower (~5s extra).</span>
+                </span>
+                <span class="switch">
+                    <input type="checkbox" id="allow-laps">
+                    <span class="switch-track"></span>
+                </span>
+            </label>
         </section>
 
-        <section>
-            <span class="label">Map style</span>
+        <section class="field">
+            <span class="field-label">Map style</span>
             <div class="toggle-group">
                 <label class="toggle-option">
                     <input type="radio" name="mapstyle" value="street" checked>
@@ -90,16 +116,16 @@
                     <span class="stat-unit">est. time</span>
                 </div>
             </div>
-            <p class="hint">Tap generate again for a different route.</p>
             <div class="action-row">
+                <button id="regen-btn" class="btn-secondary">Try another</button>
                 <button id="share-btn" class="btn-secondary">Share</button>
-                <button id="export-btn" class="btn-secondary">Export GPX</button>
+                <button id="export-btn" class="btn-secondary">Export</button>
             </div>
         </div>
-    </div>
+    </aside>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
-    <script src="/static/app.js?v=4"></script>
+    <script src="/static/app.js?v=8"></script>
 </body>
 </html>

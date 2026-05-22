@@ -31,6 +31,41 @@ let marker = null;
 let casingLayer = null;
 let routeLayer = null;
 let arrowLayer = null;
+let kmMarkers = [];
+
+function haversineMetres(a, b) {
+    const R = 6371000;
+    const toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(b[0] - a[0]);
+    const dLng = toRad(b[1] - a[1]);
+    const s = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+// Walk the polyline and emit a marker every `stepM` metres, starting at km 1.
+// Each marker is positioned on the line and labelled with its sequence number.
+function buildKmMarkers(latlngs, stepM) {
+    const out = [];
+    let acc = 0;
+    let nextMark = stepM;
+    let label = 1;
+    for (let i = 0; i < latlngs.length - 1; i++) {
+        const a = latlngs[i];
+        const b = latlngs[i + 1];
+        const seg = haversineMetres(a, b);
+        if (seg === 0) continue;
+        while (acc + seg >= nextMark) {
+            const t = (nextMark - acc) / seg;
+            const lat = a[0] + (b[0] - a[0]) * t;
+            const lng = a[1] + (b[1] - a[1]) * t;
+            out.push({ latlng: [lat, lng], label: label++ });
+            nextMark += stepM;
+        }
+        acc += seg;
+    }
+    return out;
+}
 
 function setLocation(lat, lng) {
     state.lat = lat;
@@ -50,6 +85,8 @@ function setLocation(lat, lng) {
     marker = L.marker([lat, lng], { icon }).addTo(map);
 
     document.getElementById('location-text').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    document.getElementById('location-pill').classList.remove('hidden');
+    document.getElementById('location-empty-hint').classList.add('hidden');
     document.getElementById('generate-btn').disabled = false;
 }
 
@@ -76,12 +113,13 @@ distanceInput.addEventListener('input', () => {
     distanceDisplay.textContent = `${(distanceInput.value / 1000).toFixed(1)} km`;
 });
 
-document.getElementById('generate-btn').addEventListener('click', async () => {
+async function generateRoute(triggerBtn) {
     state.seed = Math.floor(Math.random() * 9999) + 1;
 
-    const btn = document.getElementById('generate-btn');
-    btn.classList.add('loading');
-    btn.disabled = true;
+    const primary = document.getElementById('generate-btn');
+    primary.classList.add('loading');
+    primary.disabled = true;
+    if (triggerBtn && triggerBtn !== primary) triggerBtn.disabled = true;
 
     try {
         const resp = await fetch('/api/route', {
@@ -94,6 +132,7 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
                 surface: document.querySelector('input[name="surface"]:checked').value,
                 hills: document.querySelector('input[name="hills"]:checked').value,
                 seed: state.seed,
+                allowLaps: document.getElementById('allow-laps').checked,
             }),
         });
 
@@ -102,15 +141,21 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
     } catch (err) {
         alert(`Could not generate route: ${err.message}`);
     } finally {
-        btn.classList.remove('loading');
-        btn.disabled = false;
+        primary.classList.remove('loading');
+        primary.disabled = false;
+        if (triggerBtn && triggerBtn !== primary) triggerBtn.disabled = false;
     }
-});
+}
+
+document.getElementById('generate-btn').addEventListener('click', (e) => generateRoute(e.currentTarget));
+document.getElementById('regen-btn').addEventListener('click', (e) => generateRoute(e.currentTarget));
 
 function displayRoute(geojson) {
     if (casingLayer) casingLayer.remove();
     if (routeLayer) routeLayer.remove();
     if (arrowLayer) arrowLayer.remove();
+    kmMarkers.forEach(m => m.remove());
+    kmMarkers = [];
 
     const feature = geojson.features?.[0];
     if (!feature) {
@@ -123,22 +168,37 @@ function displayRoute(geojson) {
     state.geojson = geojson;
     const latlngs = coords.map(([lng, lat]) => [lat, lng]);
 
-    casingLayer = L.polyline(latlngs, { color: '#fff', weight: 7, opacity: 1 }).addTo(map);
-    routeLayer  = L.polyline(latlngs, { color: '#e84422', weight: 4, opacity: 1 }).addTo(map);
+    casingLayer = L.polyline(latlngs, { color: '#fff', weight: 8, opacity: 1 }).addTo(map);
+    routeLayer  = L.polyline(latlngs, { color: '#e84422', weight: 4.5, opacity: 1 }).addTo(map);
 
     map.fitBounds(routeLayer.getBounds(), { paddingTopLeft: [344, 60], paddingBottomRight: [60, 60] });
 
     arrowLayer = L.polylineDecorator(routeLayer, {
         patterns: [{
-            offset: '5%',
-            repeat: '10%',
+            offset: 25,
+            repeat: 60,
             symbol: L.Symbol.arrowHead({
-                pixelSize: 10,
+                pixelSize: 12,
                 polygon: true,
-                pathOptions: { fillOpacity: 1, fillColor: '#fff', color: '#e84422', weight: 1 },
+                pathOptions: { fillOpacity: 1, fillColor: '#fff', color: '#e84422', weight: 1.5, stroke: true },
             }),
         }],
     }).addTo(map);
+
+    // Numbered km markers — make the running order unambiguous even when
+    // segments overlap (you can read "1 → 2 → 3" along the route).
+    const totalKm = (feature.properties?.summary?.distance || 0) / 1000;
+    const step = totalKm > 12 ? 2000 : 1000; // 1km, or 2km for long routes
+    const marks = buildKmMarkers(latlngs, step);
+    kmMarkers = marks.map(m => {
+        const icon = L.divIcon({
+            className: 'km-marker',
+            html: `<div class="km-marker-dot">${m.label}</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+        });
+        return L.marker(m.latlng, { icon, interactive: false, keyboard: false }).addTo(map);
+    });
 
     const summary = feature.properties?.summary;
     if (summary) {
