@@ -12,10 +12,19 @@
 </head>
 <body>
     <div id="map"></div>
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
     <aside class="panel">
         <header class="panel-header">
-            <h1>Loop<span class="wordmark-dot"></span></h1>
+            <h1>
+                Loop
+                <svg class="wordmark-logo" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M 3.5 10 A 6.5 6.5 0 0 1 14 5.2"/>
+                    <path d="M 15.5 2 L 14 5.2 L 10.8 3.8"/>
+                    <path d="M 16.5 10 A 6.5 6.5 0 0 1 6 14.8"/>
+                    <path d="M 4.5 18 L 6 14.8 L 9.2 16.2"/>
+                </svg>
+            </h1>
             <p class="tagline">Build a running loop from anywhere.</p>
         </header>
 
@@ -47,7 +56,7 @@
             <label class="option-row clickable">
                 <span class="option-label">
                     Allow laps
-                    <span class="option-sublabel">Loop nearby parks. Slower (~5s extra).</span>
+                    <span class="option-sublabel">Loop nearby parks. Slower (~10–15s extra).</span>
                 </span>
                 <span class="switch">
                     <input type="checkbox" id="allow-laps">
@@ -101,8 +110,16 @@
         </div>
     </aside>
 
+    <aside class="panel-disclaimer">
+        <p>
+            Routes are generated from <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a>
+            data via <a href="https://openrouteservice.org/" target="_blank" rel="noopener">OpenRouteService</a>.
+            Distance, est. time (assuming ~6 min/km) and ascent are approximations — real-world conditions may differ.
+        </p>
+    </aside>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
-    <script src="/static/app.js?v=10"></script>
+    <script src="/static/app.js?v=15"></script>
 </body>
 </html>
