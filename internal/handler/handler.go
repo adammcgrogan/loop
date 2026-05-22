@@ -12,6 +12,7 @@ import (
 
 	"github.com/adammcgrogan/loop/internal/gpx"
 	"github.com/adammcgrogan/loop/internal/ors"
+	"github.com/adammcgrogan/loop/internal/ratelimit"
 	"github.com/adammcgrogan/loop/internal/store"
 	"github.com/adammcgrogan/loop/internal/sysmetrics"
 )
@@ -20,6 +21,7 @@ type Handler struct {
 	tmpl          *template.Template
 	ors           *ors.Client
 	store         *store.Store
+	routeLimiter  *ratelimit.Limiter
 	adminUsername string
 	adminPassword string
 	startTime     time.Time
@@ -35,6 +37,7 @@ func New(tmpl *template.Template, orsClient *ors.Client, st *store.Store, adminU
 		tmpl:          tmpl,
 		ors:           orsClient,
 		store:         st,
+		routeLimiter:  ratelimit.New(20, time.Minute),
 		adminUsername: adminUsername,
 		adminPassword: adminPassword,
 		startTime:     time.Now(),
@@ -51,6 +54,14 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Route(w http.ResponseWriter, r *http.Request) {
+	ip := clientIP(r)
+	if ok, retry := h.routeLimiter.Allow(ip); !ok {
+		secs := int(retry.Seconds()) + 1
+		w.Header().Set("Retry-After", fmt.Sprintf("%d", secs))
+		http.Error(w, "rate limited", http.StatusTooManyRequests)
+		return
+	}
+
 	var req ors.RouteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -64,7 +75,7 @@ func (h *Handler) Route(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.store.LogEvent(r.Context(), store.EventRouteGenerated, clientIP(r), r.UserAgent(), "")
+	h.store.LogEvent(r.Context(), store.EventRouteGenerated, ip, r.UserAgent(), "")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(route)
