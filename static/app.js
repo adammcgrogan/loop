@@ -142,8 +142,6 @@ async function generateRoute(triggerBtn) {
                 lat: state.lat,
                 lng: state.lng,
                 distance: parseInt(distanceInput.value),
-                surface: document.querySelector('input[name="surface"]:checked').value,
-                hills: document.querySelector('input[name="hills"]:checked').value,
                 seed: state.seed,
                 allowLaps: document.getElementById('allow-laps').checked,
             }),
@@ -236,8 +234,6 @@ document.getElementById('share-btn').addEventListener('click', async () => {
     try {
         const meta = {
             distance: parseInt(distanceInput.value),
-            surface: document.querySelector('input[name="surface"]:checked').value,
-            hills: document.querySelector('input[name="hills"]:checked').value,
         };
 
         const resp = await fetch('/api/share', {

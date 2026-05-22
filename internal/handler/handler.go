@@ -106,16 +106,12 @@ func (h *Handler) Share(w http.ResponseWriter, r *http.Request) {
 }
 
 type shareMeta struct {
-	Distance int    `json:"distance"`
-	Surface  string `json:"surface"`
-	Hills    string `json:"hills"`
+	Distance int `json:"distance"`
 }
 
 type sharePageData struct {
 	DistanceKm string
 	TimeMin    int
-	Surface    string
-	Hills      string
 	RouteJSON  template.JS
 }
 
@@ -138,20 +134,9 @@ func (h *Handler) SharePage(w http.ResponseWriter, r *http.Request) {
 	var meta shareMeta
 	json.Unmarshal([]byte(metaStr), &meta)
 
-	surface := "Roads"
-	if meta.Surface == "trail" {
-		surface = "Trails"
-	}
-	hills := "Any"
-	if meta.Hills == "flat" {
-		hills = "Prefer flat"
-	}
-
 	data := sharePageData{
 		DistanceKm: fmt.Sprintf("%.1f km", float64(meta.Distance)/1000),
 		TimeMin:    meta.Distance * 6 / 1000,
-		Surface:    surface,
-		Hills:      hills,
 		RouteJSON:  template.JS(route),
 	}
 
