@@ -43,6 +43,19 @@ function haversineMetres(a, b) {
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
+// Sum positive elevation deltas from ORS geometry coords ([lng, lat, elev]).
+// 1m per-step threshold filters DEM noise; matches the server-side scoring.
+function computeAscent(coords) {
+    let total = 0;
+    for (let i = 1; i < coords.length; i++) {
+        const a = coords[i - 1], b = coords[i];
+        if (a.length < 3 || b.length < 3) continue;
+        const d = b[2] - a[2];
+        if (d > 1) total += d;
+    }
+    return total;
+}
+
 // Walk the polyline and emit a marker every `stepM` metres, starting at km 1.
 // Each marker is positioned on the line and labelled with its sequence number.
 function buildKmMarkers(latlngs, stepM) {
@@ -204,8 +217,10 @@ function displayRoute(geojson) {
     if (summary) {
         const distKm = summary.distance / 1000;
         const paceMinPerKm = 6;
+        const ascent = computeAscent(coords);
         document.getElementById('stat-distance').textContent = `${distKm.toFixed(1)} km`;
         document.getElementById('stat-time').textContent = `~${Math.round(distKm * paceMinPerKm)} min`;
+        document.getElementById('stat-ascent').textContent = `${Math.round(ascent)} m`;
         document.getElementById('results').classList.remove('hidden');
     }
 }

@@ -428,7 +428,8 @@ func analyse(data json.RawMessage) (distance, overlap, ascent float64) {
 		edges[key] = true
 
 		if len(a) >= 3 && len(b) >= 3 {
-			if d := b[2] - a[2]; d > 0 {
+			// 1m per-step threshold filters DEM noise; matches the client display.
+			if d := b[2] - a[2]; d > 1 {
 				ascent += d
 			}
 		}

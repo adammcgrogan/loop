@@ -480,15 +480,18 @@ input[type="range"] {
 .result-stats .stat-block {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
 }
 
 .result-stats .stat-num {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
-    letter-spacing: -0.8px;
+    letter-spacing: -0.6px;
     color: var(--text-1);
     line-height: 1;
+    white-space: nowrap;
 }
 
 .result-stats .stat-unit {
