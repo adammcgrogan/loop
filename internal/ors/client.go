@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"math/rand/v2"
 	"net/http"
@@ -107,7 +106,7 @@ func (c *Client) polygonRoute(endpoint string, req RouteRequest) (json.RawMessag
 	baseAngle := rng.Float64() * 2 * math.Pi
 
 	const attempts = 4
-	for attempt := range attempts {
+	for range attempts {
 		angleJitter := rng.Float64()*0.3 + 0.1 // 0.1–0.4 rad per point
 		coords := polygonWaypoints(req.Lat, req.Lng, radius, n, baseAngle, angleJitter, rng)
 
@@ -115,10 +114,10 @@ func (c *Client) polygonRoute(endpoint string, req RouteRequest) (json.RawMessag
 
 		data, err := c.fetch(endpoint, b)
 		if err != nil {
-			if attempt == 0 {
-				return nil, err
-			}
-			break
+			// One waypoint might have landed somewhere unreachable. Rotate the
+			// polygon and try again — only give up if every attempt fails.
+			baseAngle += 2 * math.Pi / float64(n) * 0.37
+			continue
 		}
 
 		// Clip obvious dead-end spurs from the geometry before scoring.
@@ -135,13 +134,17 @@ func (c *Client) polygonRoute(endpoint string, req RouteRequest) (json.RawMessag
 		c.mu.Unlock()
 
 		distErr := math.Abs(got-target) / target
-		score := distErr + overlap*2.0
+		// Weight distance error 4× — hitting the requested distance matters
+		// more to the user than a perfectly clean route. Without this, a
+		// hugely-undersized route with low overlap can beat a correctly-sized
+		// route with some out-and-back, which is the wrong trade-off.
+		score := distErr*4 + overlap*2
 		if score < bestScore {
 			bestScore = score
 			best = cleaned
 		}
 
-		if distErr <= 0.12 && overlap <= maxOverlapRatio {
+		if distErr <= 0.10 && overlap <= maxOverlapRatio {
 			return cleaned, nil
 		}
 
@@ -193,25 +196,26 @@ func (c *Client) tryLapRoute(endpoint string, req RouteRequest) (json.RawMessage
 		searchRadius = 800
 	}
 
-	loops, err := overpass.FindLoops(req.Lat, req.Lng, searchRadius, 350, target*1.2, target)
-	if err != nil {
-		log.Printf("laps: overpass error: %v", err)
-		return nil, false
-	}
-	if len(loops) == 0 {
-		log.Printf("laps: no suitable park within %dm of (%f,%f)", searchRadius, req.Lat, req.Lng)
+	loops, err := overpass.FindLoops(req.Lat, req.Lng, searchRadius, 600, target*1.2, target)
+	if err != nil || len(loops) == 0 {
 		return nil, false
 	}
 
 	loop := loops[0]
+
+	// Don't pick a park so far away that the approach dominates the run.
+	approach := haversine(req.Lat, req.Lng, loop.CentroidLat, loop.CentroidLng)
+	if approach > target*0.25 {
+		return nil, false
+	}
+
 	laps := int(math.Round(target / loop.Perimeter))
 	if laps < 1 {
 		laps = 1
 	}
-	if laps > 8 {
-		laps = 8
+	if laps > 6 {
+		laps = 6
 	}
-	log.Printf("laps: park centroid=(%f,%f) perim=%.0fm laps=%d", loop.CentroidLat, loop.CentroidLng, loop.Perimeter, laps)
 
 	// Sample perimeter so each waypoint is roughly 200m apart, capped.
 	sampled := samplePerimeter(loop.Coords, 200)
@@ -232,11 +236,20 @@ func (c *Client) tryLapRoute(endpoint string, req RouteRequest) (json.RawMessage
 		sampled = downsample(sampled, maxPerLap)
 	}
 
+	// Optionally reverse direction (CW vs CCW) and pick a seed-derived entry
+	// point so the route varies even when the same park is chosen twice.
+	if req.Seed%2 == 0 {
+		for i, j := 0, len(sampled)-1; i < j; i, j = i+1, j-1 {
+			sampled[i], sampled[j] = sampled[j], sampled[i]
+		}
+	}
+	startOffset := req.Seed % len(sampled)
+
 	coords := [][]float64{{req.Lng, req.Lat}}
 	for lap := range laps {
 		// Rotate starting index per lap so consecutive identical points
 		// don't collapse, and the route flows continuously.
-		offset := (lap * len(sampled) / max(1, laps)) % len(sampled)
+		offset := (startOffset + lap*len(sampled)/max(1, laps)) % len(sampled)
 		for i := range sampled {
 			p := sampled[(offset+i)%len(sampled)]
 			coords = append(coords, []float64{p[1], p[0]}) // [lng,lat]
@@ -248,11 +261,9 @@ func (c *Client) tryLapRoute(endpoint string, req RouteRequest) (json.RawMessage
 
 	data, err := c.fetch(endpoint, b)
 	if err != nil {
-		log.Printf("laps: ORS error with %d waypoints: %v", len(coords), err)
 		return nil, false
 	}
-	cleaned, dist := clipSpurs(data)
-	log.Printf("laps: success, distance=%.0fm", dist)
+	cleaned, _ := clipSpurs(data)
 	return cleaned, true
 }
 
