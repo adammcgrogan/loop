@@ -132,7 +132,52 @@ function setLocation(lat, lng) {
     document.getElementById('generate-btn').disabled = false;
 }
 
-map.on('click', (e) => setLocation(e.latlng.lat, e.latlng.lng));
+map.on('click', (e) => {
+    setLocation(e.latlng.lat, e.latlng.lng);
+    // Tapping the map should collapse the bottom sheet so the user can see
+    // where they tapped without the sheet covering it.
+    collapsePanel();
+});
+
+// ── Mobile bottom-sheet expand/collapse ──────────────────────────────
+const panelEl = document.getElementById('panel');
+const handleEl = document.getElementById('panel-handle');
+const mobileMQ = window.matchMedia('(max-width: 640px)');
+
+function isMobile() { return mobileMQ.matches; }
+
+function expandPanel() {
+    if (!isMobile()) return;
+    panelEl.classList.add('expanded');
+    handleEl.setAttribute('aria-expanded', 'true');
+}
+function collapsePanel() {
+    panelEl.classList.remove('expanded');
+    handleEl.setAttribute('aria-expanded', 'false');
+}
+function togglePanel() {
+    if (panelEl.classList.contains('expanded')) collapsePanel();
+    else expandPanel();
+}
+
+handleEl.addEventListener('click', togglePanel);
+mobileMQ.addEventListener('change', () => {
+    // Reset state when crossing the breakpoint so desktop is never stuck
+    // with a stray .expanded class (harmless, but tidy).
+    if (!isMobile()) collapsePanel();
+});
+
+// Returns padding for fitBounds that keeps the route clear of the panel —
+// left-padded on desktop (panel is to the left), bottom-padded on mobile
+// (panel is docked to the bottom). Without this, mobile inherited the desktop
+// 344px left padding and zoomed the route into a sliver.
+function routeFitPadding() {
+    if (isMobile()) {
+        const h = panelEl.getBoundingClientRect().height || 200;
+        return { paddingTopLeft: [20, 60], paddingBottomRight: [20, h + 20] };
+    }
+    return { paddingTopLeft: [344, 60], paddingBottomRight: [60, 60] };
+}
 
 document.getElementById('locate-btn').addEventListener('click', () => {
     if (!navigator.geolocation) {
@@ -219,7 +264,10 @@ function displayRoute(geojson) {
     casingLayer = L.polyline(latlngs, { color: '#fff', weight: 8, opacity: 1 }).addTo(map);
     routeLayer  = L.polyline(latlngs, { color: '#e84422', weight: 4.5, opacity: 1 }).addTo(map);
 
-    map.fitBounds(routeLayer.getBounds(), { paddingTopLeft: [344, 60], paddingBottomRight: [60, 60] });
+    // Collapse the sheet first so the panel is at its peek height when we
+    // measure it for padding — otherwise an expanded sheet would over-pad.
+    collapsePanel();
+    map.fitBounds(routeLayer.getBounds(), routeFitPadding());
 
     arrowLayer = L.polylineDecorator(routeLayer, {
         patterns: [{

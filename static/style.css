@@ -613,26 +613,71 @@ input[type="range"] {
     text-underline-offset: 2px;
 }
 
+/* Drag handle / tap target for the mobile bottom sheet. Hidden on desktop. */
+.panel-handle {
+    display: none;
+}
+
 /* ── Mobile / narrow viewports ───────────────────────── */
 
 @media (max-width: 640px) {
-    /* Dock the panel to the bottom so the map and zoom controls stay
-       reachable at the top of the screen. */
+    /* Bottom sheet. In peek mode (default), only the essentials show:
+       handle, location, distance, generate (or results). Tap the handle to
+       expand for preferences, map style, and disclaimer. */
     .panel {
         top: auto;
-        left: 8px;
-        right: 8px;
-        bottom: max(8px, env(safe-area-inset-bottom));
+        left: 0;
+        right: 0;
+        bottom: 0;
         width: auto;
-        /* Cap the sheet at ~half the viewport so the map dominates;
-           the panel content stays scrollable. */
-        max-height: min(50vh, calc(100vh - 200px));
-        padding: 14px 14px 12px;
+        max-height: calc(100dvh - 80px);
+        padding: 4px 16px max(14px, env(safe-area-inset-bottom));
         gap: 12px;
-        border-radius: var(--r-lg);
+        border-radius: var(--r-lg) var(--r-lg) 0 0;
+        /* Heavier shadow so the sheet reads as floating above the map. */
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06), 0 -12px 32px rgba(0,0,0,0.10);
+        /* Smooth transition between peek and expanded heights. */
+        transition: max-height 0.24s ease;
     }
 
-    /* The separate floating disclaimer card would obscure the panel —
+    /* Sections hidden in peek mode; revealed when the sheet is expanded. */
+    .panel:not(.expanded) .mobile-extra {
+        display: none !important;
+    }
+
+    /* The drag handle — a small grabber bar + larger tap target. */
+    .panel-handle {
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 22px;
+        margin: 0 0 -4px;
+        padding: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .panel-handle::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--text-3);
+        opacity: 0.45;
+        transition: opacity 0.15s, background 0.15s;
+    }
+
+    .panel.expanded .panel-handle::before {
+        opacity: 0.6;
+    }
+
+    /* The separate floating disclaimer card would obscure the sheet —
        its content is moved inline into the panel on mobile. */
     .panel-disclaimer {
         display: none;
@@ -646,10 +691,9 @@ input[type="range"] {
 
     /* Tighten section spacing. */
     .field {
-        gap: 7px;
+        gap: 8px;
     }
 
-    /* Header takes less room. */
     .panel-header {
         gap: 2px;
     }
@@ -694,18 +738,18 @@ input[type="range"] {
     }
 
     .btn-primary {
-        padding: 12px;
-        font-size: 14px;
+        padding: 13px;
+        font-size: 15px;
     }
 
     .btn-secondary {
-        padding: 9px 10px;
+        padding: 10px 10px;
         font-size: 13px;
     }
 
     .toggle-option span {
-        padding: 7px 0;
-        font-size: 12.5px;
+        padding: 8px 0;
+        font-size: 13px;
     }
 
     .results {
@@ -729,27 +773,12 @@ input[type="range"] {
     /* Keep the attribution above the bottom-docked panel. */
     .leaflet-bottom {
         bottom: auto;
-        top: 8px;
+        top: max(8px, env(safe-area-inset-top));
+        right: 8px;
+        left: auto;
     }
 
     .leaflet-bottom .leaflet-control-attribution {
-        border-radius: 0 0 0 6px;
-    }
-}
-
-/* Very small phones — tighten further. */
-@media (max-width: 380px) {
-    .panel {
-        padding: 12px 12px 10px;
-        gap: 10px;
-        max-height: min(48vh, calc(100vh - 180px));
-    }
-
-    h1 {
-        font-size: 18px;
-    }
-
-    .tagline {
-        font-size: 11.5px;
+        border-radius: 6px;
     }
 }

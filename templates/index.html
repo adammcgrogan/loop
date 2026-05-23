@@ -8,14 +8,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/static/style.css?v=3">
+    <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
 <body>
     <div id="map"></div>
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-    <aside class="panel">
-        <header class="panel-header">
+    <aside class="panel" id="panel">
+        <button type="button" id="panel-handle" class="panel-handle" aria-label="Expand options" aria-expanded="false"></button>
+
+        <header class="panel-header mobile-extra">
             <h1>
                 Loop
                 <svg class="wordmark-logo" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -29,13 +31,13 @@
         </header>
 
         <section class="field">
-            <span class="field-label">Start</span>
+            <span class="field-label mobile-extra">Start</span>
             <button id="locate-btn" class="btn-secondary full">Use my location</button>
             <div id="location-pill" class="pill hidden">
                 <span class="pill-dot"></span>
                 <span id="location-text"></span>
             </div>
-            <p class="hint" id="location-empty-hint">Or click anywhere on the map.</p>
+            <p class="hint mobile-extra" id="location-empty-hint">Or click anywhere on the map.</p>
         </section>
 
         <section class="field">
@@ -50,7 +52,7 @@
             </div>
         </section>
 
-        <section class="field">
+        <section class="field mobile-extra">
             <span class="field-label">Preferences</span>
 
             <label class="option-row clickable">
@@ -65,7 +67,7 @@
             </label>
         </section>
 
-        <section class="field">
+        <section class="field mobile-extra">
             <span class="field-label">Map style</span>
             <div class="toggle-group">
                 <label class="toggle-option">
@@ -109,7 +111,7 @@
             </div>
         </div>
 
-        <p class="disclaimer-inline">
+        <p class="disclaimer-inline mobile-extra">
             Routes use <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a>
             data via <a href="https://openrouteservice.org/" target="_blank" rel="noopener">OpenRouteService</a>.
             Distance, est. time (~6 min/km) and ascent are approximations.
@@ -126,6 +128,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
-    <script src="/static/app.js?v=15"></script>
+    <script src="/static/app.js?v=16"></script>
 </body>
 </html>
