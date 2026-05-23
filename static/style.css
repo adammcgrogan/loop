@@ -645,36 +645,51 @@ input[type="range"] {
         display: none !important;
     }
 
-    /* The drag handle — a small grabber bar + larger tap target. */
+    /* Tap target to expand/collapse the sheet — labelled with text + chevron
+       so its function is explicit (vs the typical grabber bar, which implies
+       drag and confuses users when nothing happens on swipe). */
     .panel-handle {
-        display: block;
-        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         width: 100%;
-        height: 22px;
+        min-height: 34px;
         margin: 0 0 -4px;
-        padding: 0;
+        padding: 6px 0;
         background: none;
         border: none;
         cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-2);
         -webkit-tap-highlight-color: transparent;
     }
 
-    .panel-handle::before {
-        content: "";
-        position: absolute;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 40px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--text-3);
-        opacity: 0.45;
-        transition: opacity 0.15s, background 0.15s;
+    .panel-handle:active {
+        opacity: 0.6;
     }
 
-    .panel.expanded .panel-handle::before {
-        opacity: 0.6;
+    .panel-handle-label::before {
+        content: attr(data-collapsed);
+    }
+
+    .panel.expanded .panel-handle-label::before {
+        content: attr(data-expanded);
+    }
+
+    .panel-handle-chevron {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+
+    .panel.expanded .panel-handle-chevron {
+        transform: rotate(180deg);
     }
 
     /* The separate floating disclaimer card would obscure the sheet —

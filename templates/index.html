@@ -8,14 +8,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 <body>
     <div id="map"></div>
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
     <aside class="panel" id="panel">
-        <button type="button" id="panel-handle" class="panel-handle" aria-label="Expand options" aria-expanded="false"></button>
+        <button type="button" id="panel-handle" class="panel-handle" aria-expanded="false">
+            <span class="panel-handle-label" data-collapsed="More options" data-expanded="Hide options"></span>
+            <svg class="panel-handle-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M 4 6 L 8 10 L 12 6"/>
+            </svg>
+        </button>
 
         <header class="panel-header mobile-extra">
             <h1>
