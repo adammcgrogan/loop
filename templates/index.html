@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 <body>
     <div id="map"></div>
@@ -63,13 +63,31 @@
             <label class="option-row clickable">
                 <span class="option-label">
                     Allow laps
-                    <span class="option-sublabel">Loop nearby parks. Slower (~10–15s extra).</span>
+                    <span class="option-sublabel">Routes around nearby parks or recreation grounds.</span>
                 </span>
                 <span class="switch">
                     <input type="checkbox" id="allow-laps">
                     <span class="switch-track"></span>
                 </span>
             </label>
+
+            <div class="option-row">
+                <span class="option-label">Pace</span>
+                <div class="toggle-group compact">
+                    <label class="toggle-option">
+                        <input type="radio" name="pace" value="7">
+                        <span>Easy</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="pace" value="6" checked>
+                        <span>Steady</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="pace" value="5">
+                        <span>Fast</span>
+                    </label>
+                </div>
+            </div>
         </section>
 
         <section class="field mobile-extra">
@@ -109,6 +127,7 @@
                     <span class="stat-unit">ascent</span>
                 </div>
             </div>
+            <div id="elevation-profile" class="elevation-chart hidden"></div>
             <div class="action-row">
                 <button id="regen-btn" class="btn-secondary">Try another</button>
                 <button id="share-btn" class="btn-secondary">Share</button>
@@ -133,6 +152,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
-    <script src="/static/app.js?v=16"></script>
+    <script src="/static/app.js?v=17"></script>
 </body>
 </html>

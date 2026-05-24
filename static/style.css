@@ -590,6 +590,23 @@ input[type="range"] {
     background: rgba(170, 32, 18, 0.95);
 }
 
+/* ── Elevation profile ───────────────────────────────── */
+
+.elevation-chart {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.elevation-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+}
+
 /* ── Utility ─────────────────────────────────────────── */
 
 .hidden {

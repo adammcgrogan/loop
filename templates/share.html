@@ -100,7 +100,7 @@
         /* Stats grid */
         .stats {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
         }
 
@@ -207,6 +207,20 @@
         }
 
         .btn-secondary:hover { background: #ebebeb; }
+
+        /* Elevation chart */
+        .elevation-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .elevation-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-3);
+            font-variant-numeric: tabular-nums;
+        }
     </style>
 </head>
 <body>
@@ -227,7 +241,12 @@
                     <span class="stat-label">Est. time</span>
                     <span class="stat-value">~{{.TimeMin}} min</span>
                 </div>
+                <div class="stat">
+                    <span class="stat-label">Ascent</span>
+                    <span class="stat-value" id="stat-ascent">—</span>
+                </div>
             </div>
+            <div id="elevation-profile" style="display:none"></div>
 
             <div class="actions">
                 <button class="btn-primary" id="export-btn">Export GPX</button>
@@ -269,6 +288,74 @@
 
         map.fitBounds(route.getBounds(), { padding: [28, 28] });
 
+        // ── Computed stats ────────────────────────────────
+        function haversineMetres(a, b) {
+            const R = 6371000, toRad = d => d * Math.PI / 180;
+            const dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+            const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+        }
+
+        function computeAscent(coords) {
+            let total = 0;
+            for (let i = 1; i < coords.length; i++) {
+                const a = coords[i - 1], b = coords[i];
+                if (a.length >= 3 && b.length >= 3 && b[2] - a[2] > 1) total += b[2] - a[2];
+            }
+            return total;
+        }
+
+        function buildElevationProfile(coords) {
+            if (coords.length < 4 || coords[0].length < 3) return null;
+            const step = Math.max(1, Math.floor(coords.length / 150));
+            const pts = [];
+            for (let i = 0; i < coords.length; i += step) pts.push(coords[i]);
+            if (pts[pts.length - 1] !== coords[coords.length - 1]) pts.push(coords[coords.length - 1]);
+            const eles = pts.map(c => c[2]);
+            const minE = Math.min(...eles), maxE = Math.max(...eles);
+            if (maxE - minE < 5) return null;
+            const cumDist = [0];
+            for (let i = 1; i < pts.length; i++) {
+                const prev = pts[i - 1], curr = pts[i];
+                cumDist.push(cumDist[i - 1] + haversineMetres([prev[1], prev[0]], [curr[1], curr[0]]));
+            }
+            const totalD = cumDist[cumDist.length - 1] || 1;
+            const W = 260, H = 44, pad = 2;
+            const polyPts = pts.map((c, i) => {
+                const x = (cumDist[i] / totalD) * W;
+                const y = pad + (H - pad * 2) * (1 - (c[2] - minE) / (maxE - minE));
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            });
+            const lineD = `M ${polyPts[0]} L ${polyPts.slice(1).join(' L ')}`;
+            const areaD = `${lineD} L ${W},${H} L 0,${H} Z`;
+            return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" height="${H}" style="width:100%;display:block;border-radius:4px" aria-hidden="true">
+                <defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#e84422" stop-opacity="0.16"/>
+                    <stop offset="100%" stop-color="#e84422" stop-opacity="0"/>
+                </linearGradient></defs>
+                <path d="${areaD}" fill="url(#eg)"/>
+                <path d="${lineD}" fill="none" stroke="#e84422" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <div class="elevation-labels">
+                <span>${Math.round(minE)} m</span>
+                <span>${Math.round(maxE)} m</span>
+            </div>`;
+        }
+
+        // Populate ascent stat.
+        const ascent = computeAscent(coords);
+        document.getElementById('stat-ascent').textContent = `${Math.round(ascent)} m`;
+
+        // Elevation profile.
+        const profileEl = document.getElementById('elevation-profile');
+        const profileHtml = buildElevationProfile(coords);
+        if (profileHtml) {
+            profileEl.className = 'elevation-chart';
+            profileEl.innerHTML = profileHtml;
+            profileEl.style.display = '';
+        }
+
+        // ── GPX export ────────────────────────────────────
         document.getElementById('export-btn').addEventListener('click', async () => {
             const btn = document.getElementById('export-btn');
             btn.classList.add('loading');
@@ -278,7 +365,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ coordinates: coords }),
                 });
-                if (!resp.ok) { alert('Export failed'); return; }
+                if (!resp.ok) {
+                    btn.textContent = 'Export failed — try again';
+                    setTimeout(() => { btn.textContent = 'Export GPX'; btn.classList.remove('loading'); }, 2500);
+                    return;
+                }
                 const url = URL.createObjectURL(await resp.blob());
                 const a = document.createElement('a');
                 a.href = url; a.download = 'loop-route.gpx'; a.click();
